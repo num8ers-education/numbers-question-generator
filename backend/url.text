@@ -1,0 +1,108 @@
+Authentication APIs
+
+Login: POST http://localhost:8000/api/login
+OAuth Token: POST http://localhost:8000/api/oauth/token
+
+Admin - User Management APIs
+
+Create User: POST http://localhost:8000/api/users
+Get All Users: GET http://localhost:8000/api/users
+Get User by ID: GET http://localhost:8000/api/users/{user_id}
+Update User: PUT http://localhost:8000/api/users/{user_id}
+Delete User: DELETE http://localhost:8000/api/users/{user_id}
+Reset User Password: POST http://localhost:8000/api/users/{user_id}/reset-password
+Deactivate User: POST http://localhost:8000/api/users/{user_id}/deactivate
+Activate User: POST http://localhost:8000/api/users/{user_id}/activate
+
+Curriculum Management APIs
+Curriculum
+
+Create Curriculum: POST http://localhost:8000/api/curriculum
+Get All Curricula: GET http://localhost:8000/api/curriculum
+Get Curriculum by ID: GET http://localhost:8000/api/curriculum/{curriculum_id}
+Get Curriculum Full Hierarchy: GET http://localhost:8000/api/curriculum/{curriculum_id}/full
+Update Curriculum: PUT http://localhost:8000/api/curriculum/{curriculum_id}
+Delete Curriculum: DELETE http://localhost:8000/api/curriculum/{curriculum_id}
+
+Subjects
+
+Create Subject: POST http://localhost:8000/api/subjects
+Get All Subjects: GET http://localhost:8000/api/subjects
+Get Subjects by Curriculum: GET http://localhost:8000/api/subjects?curriculum_id={curriculum_id}
+Get Subject by ID: GET http://localhost:8000/api/subjects/{subject_id}
+Get Subject with Hierarchy: GET http://localhost:8000/api/subjects/{subject_id}/full
+Update Subject: PUT http://localhost:8000/api/subjects/{subject_id}
+Delete Subject: DELETE http://localhost:8000/api/subjects/{subject_id}
+
+Courses
+
+Create Course: POST http://localhost:8000/api/courses
+Get All Courses: GET http://localhost:8000/api/courses
+Get Courses by Subject: GET http://localhost:8000/api/courses?subject_id={subject_id}
+Get Course by ID: GET http://localhost:8000/api/courses/{course_id}
+Get Course with Hierarchy: GET http://localhost:8000/api/courses/{course_id}/full
+Update Course: PUT http://localhost:8000/api/courses/{course_id}
+Delete Course: DELETE http://localhost:8000/api/courses/{course_id}
+
+Units
+
+Create Unit: POST http://localhost:8000/api/units
+Get All Units: GET http://localhost:8000/api/units
+Get Units by Course: GET http://localhost:8000/api/units?course_id={course_id}
+Get Unit by ID: GET http://localhost:8000/api/units/{unit_id}
+Get Unit with Topics: GET http://localhost:8000/api/units/{unit_id}/full
+Update Unit: PUT http://localhost:8000/api/units/{unit_id}
+Delete Unit: DELETE http://localhost:8000/api/units/{unit_id}
+
+Topics
+
+Create Topic: POST http://localhost:8000/api/topics
+Get All Topics: GET http://localhost:8000/api/topics
+Get Topics by Unit: GET http://localhost:8000/api/topics?unit_id={unit_id}
+Get Topic by ID: GET http://localhost:8000/api/topics/{topic_id}
+Update Topic: PUT http://localhost:8000/api/topics/{topic_id}
+Delete Topic: DELETE http://localhost:8000/api/topics/{topic_id}
+
+Question Management APIs
+
+Create Question Manually: POST http://localhost:8000/api/questions
+Get All Questions: GET http://localhost:8000/api/questions
+Get Questions with Filters: GET http://localhost:8000/api/questions?topic_id={topic_id}&difficulty=Medium&question_type=MCQ
+Get Question by ID: GET http://localhost:8000/api/questions/{question_id}
+Update Question: PUT http://localhost:8000/api/questions/{question_id}
+Delete Question: DELETE http://localhost:8000/api/questions/{question_id}
+Generate Questions with AI: POST http://localhost:8000/api/questions/ai/generate
+Regenerate Question: POST http://localhost:8000/api/questions/ai/regenerate
+Batch Delete Questions: POST http://localhost:8000/api/questions/batch/delete
+
+Prompt Template APIs
+
+Create Prompt Template: POST http://localhost:8000/api/prompts
+Get All Prompt Templates: GET http://localhost:8000/api/prompts
+Get Default Prompt Template: GET http://localhost:8000/api/prompts/default
+Get Prompt Template by ID: GET http://localhost:8000/api/prompts/{prompt_id}
+Update Prompt Template: PUT http://localhost:8000/api/prompts/{prompt_id}
+Delete Prompt Template: DELETE http://localhost:8000/api/prompts/{prompt_id}
+Set Prompt as Default: POST http://localhost:8000/api/prompts/{prompt_id}/set-default
+
+Teacher APIs
+
+Get Teacher Dashboard: GET http://localhost:8000/api/teacher/dashboard
+Get Teacher Activity: GET http://localhost:8000/api/teacher/activity?days=30
+
+Student APIs
+
+Get Student Dashboard: GET http://localhost:8000/api/student/dashboard
+Get Available Question Sets: GET http://localhost:8000/api/student/question-sets
+Get Topic Questions: GET http://localhost:8000/api/student/topic/{topic_id}/questions
+Generate Practice Quiz: POST http://localhost:8000/api/student/practice-quiz
+
+Health Check
+
+Health Check: GET http://localhost:8000/api/health
+
+When testing these APIs in Postman, remember to:
+
+Set the Authorization header with your token: Authorization: Bearer your_jwt_token
+Use appropriate Content-Type header for POST/PUT requests: Content-Type: application/json
+Replace placeholder IDs with actual IDs from your database

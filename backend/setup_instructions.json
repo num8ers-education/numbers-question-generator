@@ -1,0 +1,998 @@
+{
+  "info": {
+    "name": "AI Question Generator API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  " pm.environment.set('token', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"email\": \"admin@example.com\",\n \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OAuth Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123",
+                  "type": "text"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/oauth/token",
+              "host": ["{{base_url}}"],
+              "path": ["oauth", "token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - User Management",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"email\": \"teacher@example.com\",\n \"password\": \"teacher123\",\n \"full_name\": \"Teacher User\",\n \"role\": \"teacher\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/user_id_here",
+              "host": ["{{base_url}}"],
+              "path": ["users", "user_id_here"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"full_name\": \"Updated Teacher Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/user_id_here",
+              "host": ["{{base_url}}"],
+              "path": ["users", "user_id_here"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/user_id_here",
+              "host": ["{{base_url}}"],
+              "path": ["users", "user_id_here"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset User Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"new_password\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/user_id_here/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["users", "user_id_here", "reset-password"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Curriculum Management",
+      "item": [
+        {
+          "name": "Curriculum",
+          "item": [
+            {
+              "name": "Create Curriculum",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"name\": \"K-12 Science\",\n \"description\": \"Standard Science curriculum for K-12 students\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/curriculum",
+                  "host": ["{{base_url}}"],
+                  "path": ["curriculum"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Curricula",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/curriculum",
+                  "host": ["{{base_url}}"],
+                  "path": ["curriculum"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Curriculum by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/curriculum/curriculum_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["curriculum", "curriculum_id_here"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Curriculum Full Hierarchy",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/curriculum/curriculum_id_here/full",
+                  "host": ["{{base_url}}"],
+                  "path": ["curriculum", "curriculum_id_here", "full"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Curriculum",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"name\": \"Updated K-12 Science\",\n \"description\": \"Updated description\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/curriculum/curriculum_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["curriculum", "curriculum_id_here"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Curriculum",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/curriculum/curriculum_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["curriculum", "curriculum_id_here"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Subjects",
+          "item": [
+            {
+              "name": "Create Subject",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"name\": \"Physics\",\n \"description\": \"High school physics\",\n \"curriculum_id\": \"curriculum_id_here\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/subjects",
+                  "host": ["{{base_url}}"],
+                  "path": ["subjects"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Subjects",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/subjects?curriculum_id=curriculum_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["subjects"],
+                  "query": [
+                    {
+                      "key": "curriculum_id",
+                      "value": "curriculum_id_here"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Subject by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/subjects/subject_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["subjects", "subject_id_here"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Courses",
+          "item": [
+            {
+              "name": "Create Course",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"name\": \"Mechanics\",\n \"description\": \"Study of motion and forces\",\n \"subject_id\": \"subject_id_here\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/courses",
+                  "host": ["{{base_url}}"],
+                  "path": ["courses"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Courses",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/courses?subject_id=subject_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["courses"],
+                  "query": [
+                    {
+                      "key": "subject_id",
+                      "value": "subject_id_here"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Units",
+          "item": [
+            {
+              "name": "Create Unit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"name\": \"Newton's Laws\",\n \"description\": \"Understanding Newton's Laws of Motion\",\n \"course_id\": \"course_id_here\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/units",
+                  "host": ["{{base_url}}"],
+                  "path": ["units"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Units",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/units?course_id=course_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    {
+                      "key": "course_id",
+                      "value": "course_id_here"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Topics",
+          "item": [
+            {
+              "name": "Create Topic",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"name\": \"First Law of Motion\",\n \"description\": \"An object at rest stays at rest...\",\n \"unit_id\": \"unit_id_here\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/topics",
+                  "host": ["{{base_url}}"],
+                  "path": ["topics"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Topics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/topics?unit_id=unit_id_here",
+                  "host": ["{{base_url}}"],
+                  "path": ["topics"],
+                  "query": [
+                    {
+                      "key": "unit_id",
+                      "value": "unit_id_here"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Question Management",
+      "item": [
+        {
+          "name": "Create Question Manually",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"question_text\": \"What is Newton's First Law of Motion?\",\n \"question_type\": \"MCQ\",\n \"options\": [\n \"An object at rest stays at rest unless acted upon by an external force\",\n \"Force equals mass times acceleration\",\n \"For every action there is an equal and opposite reaction\",\n \"Energy cannot be created or destroyed\"\n ],\n \"correct_answer\": \"An object at rest stays at rest unless acted upon by an external force\",\n \"explanation\": \"Newton's First Law of Motion states that an object will remain at rest or in uniform motion in a straight line unless acted upon by an external force.\",\n \"difficulty\": \"Medium\",\n \"topic_id\": \"topic_id_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/questions",
+              "host": ["{{base_url}}"],
+              "path": ["questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/questions?topic_id=topic_id_here&difficulty=Medium&question_type=MCQ",
+              "host": ["{{base_url}}"],
+              "path": ["questions"],
+              "query": [
+                {
+                  "key": "topic_id",
+                  "value": "topic_id_here"
+                },
+                {
+                  "key": "difficulty",
+                  "value": "Medium"
+                },
+                {
+                  "key": "question_type",
+                  "value": "MCQ"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Questions with AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"topic_id\": \"topic_id_here\",\n \"num_questions\": 5,\n \"question_types\": [\"MCQ\", \"True/False\"],\n \"difficulty\": \"Medium\",\n \"custom_prompt\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/questions/ai/generate",
+              "host": ["{{base_url}}"],
+              "path": ["questions", "ai", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Regenerate Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"question_id\": \"question_id_here\",\n \"with_custom_prompt\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/questions/ai/regenerate",
+              "host": ["{{base_url}}"],
+              "path": ["questions", "ai", "regenerate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"question_text\": \"Updated question text\",\n \"explanation\": \"Updated explanation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/questions/question_id_here",
+              "host": ["{{base_url}}"],
+              "path": ["questions", "question_id_here"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/questions/question_id_here",
+              "host": ["{{base_url}}"],
+              "path": ["questions", "question_id_here"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Delete Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"question_ids\": [\"id1\", \"id2\", \"id3\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/questions/batch/delete",
+              "host": ["{{base_url}}"],
+              "path": ["questions", "batch", "delete"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Prompt Templates",
+      "item": [
+        {
+          "name": "Create Prompt Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"name\": \"Physics Question Template\",\n \"description\": \"Template optimized for physics questions\",\n \"template\": \"You are an expert physics educator. Generate {num_questions} questions on the topic '{topic}'...\",\n \"is_default\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/prompts",
+              "host": ["{{base_url}}"],
+              "path": ["prompts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Prompt Templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prompts",
+              "host": ["{{base_url}}"],
+              "path": ["prompts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Default Prompt Template",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prompts/default",
+              "host": ["{{base_url}}"],
+              "path": ["prompts", "default"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Prompt as Default",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/prompts/prompt_id_here/set-default",
+              "host": ["{{base_url}}"],
+              "path": ["prompts", "prompt_id_here", "set-default"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Teacher",
+      "item": [
+        {
+          "name": "Get Teacher Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teacher/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["teacher", "dashboard"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Teacher Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/teacher/activity?days=30",
+              "host": ["{{base_url}}"],
+              "path": ["teacher", "activity"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Student",
+      "item": [
+        {
+          "name": "Get Student Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/student/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["student", "dashboard"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Question Sets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/student/question-sets",
+              "host": ["{{base_url}}"],
+              "path": ["student", "question-sets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Topic Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/student/topic/topic_id_here/questions",
+              "host": ["{{base_url}}"],
+              "path": ["student", "topic", "topic_id_here", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Practice Quiz",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n \"topic_ids\": [\"topic_id_1\", \"topic_id_2\"],\n \"question_count\": 10,\n \"difficulty\": \"Medium\",\n \"question_types\": [\"MCQ\", \"True/False\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/student/practice-quiz",
+              "host": ["{{base_url}}"],
+              "path": ["student", "practice-quiz"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

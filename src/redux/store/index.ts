@@ -1,8 +1,11 @@
+// src/redux/store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
+import appReducer from '../features/app/appSlice';
 
 export const store = configureStore({
   reducer: {
-    // Add reducers here as you create them
+    app: appReducer,
+    // Add more reducers here as you create them
   },
 });
 

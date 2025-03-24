@@ -35,16 +35,11 @@ const CurriculumCard = ({
             <BookOpen size={48} className="text-white/80" />
           </div>
         )}
-        <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-medium">
-          {level}
-        </div>
       </div>
       
       <div className="p-4 flex-1 flex flex-col">
         <div className="mb-2">
-          <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded">
-            {subjectArea}
-          </span>
+    
         </div>
         
         <h3 className="font-bold text-lg mb-4">{title}</h3>

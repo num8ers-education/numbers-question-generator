@@ -31,7 +31,7 @@ const activities = [
   
   const RecentActivity = () => {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="font-bold text-lg">Recent Activity</h2>
         </div>

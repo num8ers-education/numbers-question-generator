@@ -1,24 +1,24 @@
-import { BookOpen, Clock, FileText } from 'lucide-react';
+// src/components/curricula/CurriculumCard.tsx
+import { BookOpen, FileText } from 'lucide-react';
 
 interface CurriculumCardProps {
   id: string;
   title: string;
-  description: string;
   level: string;
   subjectArea: string;
   questionCount: number;
-  lastGenerated?: string;
   imageSrc?: string;
+  // Keeping these optional for backward compatibility
+  description?: string;
+  lastGenerated?: string;
 }
 
 const CurriculumCard = ({
   id,
   title,
-  description,
   level,
   subjectArea,
   questionCount,
-  lastGenerated,
   imageSrc,
 }: CurriculumCardProps) => {
   return (
@@ -47,22 +47,14 @@ const CurriculumCard = ({
           </span>
         </div>
         
-        <h3 className="font-bold text-lg mb-1">{title}</h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{description}</p>
+        <h3 className="font-bold text-lg mb-4">{title}</h3>
         
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center text-sm">
             <div className="flex items-center gap-1 text-gray-600">
               <FileText size={16} />
               <span>{questionCount} questions</span>
             </div>
-            
-            {lastGenerated && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <Clock size={16} />
-                <span>{lastGenerated}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>

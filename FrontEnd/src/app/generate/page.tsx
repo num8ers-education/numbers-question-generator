@@ -264,7 +264,7 @@ export default function GeneratePage() {
                 <div className="space-y-4">
                   {selectedCourse.units.map((unit: any, index: number) => (
                     <Link
-                      href={`/curricula/${selectedCurriculum.id}/${selectedCourse.id}/${unit.id}`}
+                      href={`/generate/questions/${selectedCurriculum.id}/${selectedCourse.id}/${unit.id}`}
                       key={unit.id}
                       className="block border border-gray-200 rounded-lg p-4 hover:bg-blue-50 transition-colors duration-200"
                     >

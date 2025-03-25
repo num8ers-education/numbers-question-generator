@@ -144,32 +144,26 @@ export default function GeneratePage() {
   };
 
   return (
-    <Layout allowedRoles={['admin', 'teacher']}>
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-white px-4 py-5 border-b border-gray-200 sm:px-6">
-            <div className="flex items-center">
-              {view === "curricula" ? (
-                <Link
-                  href="/dashboard"
-                  className="mr-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <ArrowLeft className="h-5 w-5 text-gray-500" />
-                </Link>
-              ) : (
-                <button
-                  onClick={handleBackClick}
-                  className="mr-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <ArrowLeft className="h-5 w-5 text-gray-500" />
-                </button>
-              )}
-              <h1 className="text-lg font-medium text-gray-900">
-                {getTitle()}
-              </h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-0">
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            {/* Header */}
+            <div className="bg-white px-4 py-5 border-b border-gray-200 sm:px-6">
+              <div className="flex items-center">
+                {view !== "curricula" && (
+                  <button
+                    onClick={handleBackClick}
+                    className="mr-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-500" />
+                  </button>
+                )}
+                <h1 className="text-lg font-medium text-gray-900">
+                  {getTitle()}
+                </h1>
+              </div>
             </div>
-          </div>
 
           {/* Content */}
           <div className="bg-white p-6">

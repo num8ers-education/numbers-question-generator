@@ -6,7 +6,6 @@ import {
   LayoutGrid, 
   FileQuestion, 
   Settings, 
-  BookOpen, 
   BarChart3, 
   LogOut,
   Sparkles

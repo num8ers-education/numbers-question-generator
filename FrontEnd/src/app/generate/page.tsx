@@ -9,7 +9,8 @@ const curricula = [
   {
     id: "ap",
     name: "Advanced Placement (AP)",
-    description: "College Board's college-level courses for high school students",
+    description:
+      "College Board's college-level courses for high school students",
     icon: <GraduationCap className="h-8 w-8 text-blue-600" />,
     courses: [
       {
@@ -21,8 +22,8 @@ const curricula = [
           { id: "derivatives", name: "Differentiation" },
           { id: "applications", name: "Applications of Derivatives" },
           { id: "integrals", name: "Integration and Accumulation of Change" },
-          { id: "differential-equations", name: "Differential Equations" }
-        ]
+          { id: "differential-equations", name: "Differential Equations" },
+        ],
       },
       {
         id: "ap-calc-bc",
@@ -34,8 +35,8 @@ const curricula = [
           { id: "applications", name: "Applications of Derivatives" },
           { id: "integrals", name: "Integration and Accumulation of Change" },
           { id: "differential-equations", name: "Differential Equations" },
-          { id: "series", name: "Infinite Sequences and Series" }
-        ]
+          { id: "series", name: "Infinite Sequences and Series" },
+        ],
       },
       {
         id: "ap-physics",
@@ -46,10 +47,10 @@ const curricula = [
           { id: "dynamics", name: "Dynamics" },
           { id: "energy", name: "Work, Energy, and Power" },
           { id: "momentum", name: "Linear Momentum" },
-          { id: "rotation", name: "Rotation" }
-        ]
-      }
-    ]
+          { id: "rotation", name: "Rotation" },
+        ],
+      },
+    ],
   },
   {
     id: "ib",
@@ -60,28 +61,30 @@ const curricula = [
       {
         id: "ib-math-ai-sl",
         name: "IB Mathematics: Applications and Interpretation SL",
-        description: "For students interested in developing mathematics for describing our world",
+        description:
+          "For students interested in developing mathematics for describing our world",
         units: [
           { id: "number-algebra", name: "Number and Algebra" },
           { id: "functions", name: "Functions" },
           { id: "geometry-trig", name: "Geometry and Trigonometry" },
           { id: "statistics-probability", name: "Statistics and Probability" },
-          { id: "calculus", name: "Calculus" }
-        ]
+          { id: "calculus", name: "Calculus" },
+        ],
       },
       {
         id: "ib-math-aa-hl",
         name: "IB Mathematics: Analysis and Approaches HL",
-        description: "For students interested in mathematics, engineering, physical sciences, and some economics",
+        description:
+          "For students interested in mathematics, engineering, physical sciences, and some economics",
         units: [
           { id: "number-algebra", name: "Number and Algebra" },
           { id: "functions", name: "Functions" },
           { id: "geometry-trig", name: "Geometry and Trigonometry" },
           { id: "statistics-probability", name: "Statistics and Probability" },
-          { id: "calculus", name: "Calculus" }
-        ]
-      }
-    ]
+          { id: "calculus", name: "Calculus" },
+        ],
+      },
+    ],
   },
   {
     id: "igcse",
@@ -97,8 +100,8 @@ const curricula = [
           { id: "number", name: "Number" },
           { id: "algebra", name: "Algebra" },
           { id: "geometry", name: "Geometry" },
-          { id: "statistics", name: "Statistics and Probability" }
-        ]
+          { id: "statistics", name: "Statistics and Probability" },
+        ],
       },
       {
         id: "igcse-physics",
@@ -109,10 +112,10 @@ const curricula = [
           { id: "thermal-physics", name: "Thermal Physics" },
           { id: "waves", name: "Waves" },
           { id: "electricity-magnetism", name: "Electricity and Magnetism" },
-          { id: "nuclear-physics", name: "Nuclear Physics" }
-        ]
-      }
-    ]
+          { id: "nuclear-physics", name: "Nuclear Physics" },
+        ],
+      },
+    ],
   },
   {
     id: "alevel",
@@ -127,8 +130,8 @@ const curricula = [
         units: [
           { id: "pure-math", name: "Pure Mathematics" },
           { id: "mechanics", name: "Mechanics" },
-          { id: "statistics", name: "Statistics" }
-        ]
+          { id: "statistics", name: "Statistics" },
+        ],
       },
       {
         id: "alevel-further-math",
@@ -138,44 +141,46 @@ const curricula = [
           { id: "further-pure", name: "Further Pure Mathematics" },
           { id: "further-mechanics", name: "Further Mechanics" },
           { id: "further-statistics", name: "Further Statistics" },
-          { id: "decision-math", name: "Decision Mathematics" }
-        ]
-      }
-    ]
-  }
+          { id: "decision-math", name: "Decision Mathematics" },
+        ],
+      },
+    ],
+  },
 ];
 
-export default function CurriculaPage() {
-  const [view, setView] = useState<'curricula' | 'courses' | 'units'>('curricula');
+export default function GeneratePage() {
+  const [view, setView] = useState<"curricula" | "courses" | "units">(
+    "curricula"
+  );
   const [selectedCurriculum, setSelectedCurriculum] = useState<any>(null);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
   const handleCurriculumClick = (curriculum: any) => {
     setSelectedCurriculum(curriculum);
-    setView('courses');
+    setView("courses");
   };
 
   const handleCourseClick = (course: any) => {
     setSelectedCourse(course);
-    setView('units');
+    setView("units");
   };
 
   const handleBackClick = () => {
-    if (view === 'units') {
-      setView('courses');
+    if (view === "units") {
+      setView("courses");
       setSelectedCourse(null);
-    } else if (view === 'courses') {
-      setView('curricula');
+    } else if (view === "courses") {
+      setView("curricula");
       setSelectedCurriculum(null);
     }
   };
 
   // Title based on current view
   const getTitle = () => {
-    if (view === 'curricula') return 'Curricula';
-    if (view === 'courses') return `${selectedCurriculum.name} Courses`;
-    if (view === 'units') return `${selectedCourse.name} Units`;
-    return 'Curricula';
+    if (view === "curricula") return "Select Curricula";
+    if (view === "courses") return `${selectedCurriculum.name} Courses`;
+    if (view === "units") return `${selectedCourse.name} Units`;
+    return "Curricula";
   };
 
   return (
@@ -186,7 +191,7 @@ export default function CurriculaPage() {
             {/* Header */}
             <div className="bg-white px-4 py-5 border-b border-gray-200 sm:px-6">
               <div className="flex items-center">
-                {view !== 'curricula' && (
+                {view !== "curricula" && (
                   <button
                     onClick={handleBackClick}
                     className="mr-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -194,28 +199,34 @@ export default function CurriculaPage() {
                     <ArrowLeft className="h-5 w-5 text-gray-500" />
                   </button>
                 )}
-                <h1 className="text-lg font-medium text-gray-900">{getTitle()}</h1>
+                <h1 className="text-lg font-medium text-gray-900">
+                  {getTitle()}
+                </h1>
               </div>
             </div>
 
             {/* Content */}
             <div className="bg-white p-6">
-              {view === 'curricula' && (
+              {view === "curricula" && (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {curricula.map((curriculum) => (
-                    <div 
+                    <div
                       key={curriculum.id}
-                      className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer"
+                      className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer flex flex-col h-full"
                       onClick={() => handleCurriculumClick(curriculum)}
                     >
-                      <div className="p-6">
+                      <div className="p-6 flex-grow">
                         <div className="flex items-center mb-4">
                           {curriculum.icon}
-                          <h2 className="ml-3 text-xl font-semibold text-gray-900">{curriculum.name}</h2>
+                          <h2 className="ml-3 text-xl font-semibold text-gray-900">
+                            {curriculum.name}
+                          </h2>
                         </div>
-                        <p className="text-gray-600">{curriculum.description}</p>
+                        <p className="text-gray-600">
+                          {curriculum.description}
+                        </p>
                       </div>
-                      <div className="px-6 py-3 bg-blue-50 border-t border-gray-200">
+                      <div className="px-6 py-3 bg-blue-50 border-t border-gray-200 mt-auto">
                         <span className="text-sm font-medium text-blue-600">
                           {curriculum.courses.length} courses available
                         </span>
@@ -225,19 +236,21 @@ export default function CurriculaPage() {
                 </div>
               )}
 
-              {view === 'courses' && selectedCurriculum && (
+              {view === "courses" && selectedCurriculum && (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {selectedCurriculum.courses.map((course: any) => (
-                    <div 
+                    <div
                       key={course.id}
-                      className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer"
+                      className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer flex flex-col h-full"
                       onClick={() => handleCourseClick(course)}
                     >
-                      <div className="p-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2">{course.name}</h2>
+                      <div className="p-6 flex-grow">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                          {course.name}
+                        </h2>
                         <p className="text-gray-600">{course.description}</p>
                       </div>
-                      <div className="px-6 py-3 bg-blue-50 border-t border-gray-200">
+                      <div className="px-6 py-3 bg-blue-50 border-t border-gray-200 mt-auto">
                         <span className="text-sm font-medium text-blue-600">
                           {course.units.length} units available
                         </span>
@@ -247,11 +260,11 @@ export default function CurriculaPage() {
                 </div>
               )}
 
-              {view === 'units' && selectedCourse && (
+              {view === "units" && selectedCourse && (
                 <div className="space-y-4">
                   {selectedCourse.units.map((unit: any, index: number) => (
                     <Link
-                      href={`/curricula/${selectedCurriculum.id}/${selectedCourse.id}/${unit.id}`}
+                      href={`/generate/questions/${selectedCurriculum.id}/${selectedCourse.id}/${unit.id}`}
                       key={unit.id}
                       className="block border border-gray-200 rounded-lg p-4 hover:bg-blue-50 transition-colors duration-200"
                     >
@@ -260,7 +273,9 @@ export default function CurriculaPage() {
                           {index + 1}
                         </div>
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">{unit.name}</h3>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {unit.name}
+                          </h3>
                         </div>
                       </div>
                     </Link>

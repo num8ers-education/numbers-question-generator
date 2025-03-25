@@ -1,6 +1,6 @@
 import DashboardStatsCards from './DashboardStatsCards';
 import RecentActivity from './RecentActivity';
-import CurriculaGrid from '@/curricula/CurriculaGrid';
+import CurriculaGrid from '../curricula/CurriculaGrid';
 
 export default function Dashboard() {
   return (

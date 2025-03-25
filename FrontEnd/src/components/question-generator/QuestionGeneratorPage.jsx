@@ -186,7 +186,7 @@ export default function QuestionGeneratorPage() {
                       <button
                         key={number}
                         type="button"
-                        className={`px-4 py-2 rounded-md transition-colors ${
+                        className={`px-4 py-2 rounded-md transition-colors cursor-pointer ${
                           formData.numberOfQuestions === number
                             ? "bg-blue-500 text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -238,31 +238,32 @@ export default function QuestionGeneratorPage() {
 
                 {/* Difficulty Level */}
                 <div className="mb-8">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     Difficulty Level
                   </label>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {difficultyLevels.map((level) => (
-                      <div
+                      <button
                         key={level.id}
-                        className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                        type="button"
+                        className={`px-6 py-2 rounded-md flex items-center transition-all cursor-pointer border-2 ${
                           formData.difficultyLevel === level.id
-                            ? `border-2 ${level.color}`
-                            : "border-gray-200 hover:border-gray-300"
+                            ? level.id === "easy"
+                              ? "bg-green-100 text-green-800 border-green-500"
+                              : level.id === "medium"
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-500"
+                              : "bg-red-100 text-red-800 border-red-500"
+                            : "bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                         }`}
                         onClick={() =>
                           handleCardSelection("difficultyLevel", level.id)
                         }
                       >
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium">
-                            {level.name}
-                          </span>
-                          {formData.difficultyLevel === level.id && (
-                            <Check className="h-4 w-4 ml-2" />
-                          )}
-                        </div>
-                      </div>
+                        <span className="font-medium">{level.name}</span>
+                        {formData.difficultyLevel === level.id && (
+                          <Check className="h-4 w-4 ml-2" />
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>

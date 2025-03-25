@@ -1,40 +1,43 @@
 // src/components/auth/LoginPage.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const router = useRouter();
 
   // Static credentials for demo
   const validCredentials = {
-    email: 'admin@example.com',
-    password: 'password123'
+    email: "admin@example.com",
+    password: "password123",
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
-    
+    setError("");
+
     // Simulate API request delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Check credentials against static data
-    if (email === validCredentials.email && password === validCredentials.password) {
+    if (
+      email === validCredentials.email &&
+      password === validCredentials.password
+    ) {
       // Redirect to dashboard on successful login
-      router.push('/dashboard');
+      router.push("/dashboard");
     } else {
-      setError('Invalid email or password');
+      setError("Invalid email or password");
       setIsLoading(false);
     }
   };
@@ -49,20 +52,24 @@ export default function LoginPage() {
               <span className="text-white text-2xl font-bold">QG</span>
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Question Generator</h2>
+          <h2 className="text-3xl font-bold text-gray-900">
+            Question Generator
+          </h2>
           <p className="mt-2 text-gray-600">Sign in to your account</p>
         </div>
-        
+
         <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
           {error && (
             <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4 text-sm text-red-700">
               {error}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700">
                 Email address
               </label>
               <div className="mt-1">
@@ -81,7 +88,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="mt-1 relative">
@@ -99,8 +108,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 flex items-center pr-3"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
+                  onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
                   ) : (
@@ -120,13 +128,17 @@ export default function LoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-700">
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                <a
+                  href="#"
+                  className="font-medium text-blue-600 hover:text-blue-500">
                   Forgot your password?
                 </a>
               </div>
@@ -136,12 +148,24 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+                className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
                 {isLoading ? (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : (
                   <LogIn className="mr-2 h-4 w-4" />
@@ -150,11 +174,13 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-          
+
           <div className="mt-6">
             <p className="text-center text-sm text-gray-600">
               <span>Demo credentials: </span>
-              <span className="font-semibold">admin@example.com / password123</span>
+              <span className="font-semibold">
+                admin@example.com / password123
+              </span>
             </p>
           </div>
         </div>

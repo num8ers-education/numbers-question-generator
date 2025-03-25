@@ -12,25 +12,6 @@ A FastAPI-based backend system for an educational platform that allows teachers 
 - **No Duplicates**: Content hashing to prevent duplicate questions
 - **MongoDB Integration**: Flexible document storage for all system data
 
-## Project Structure
-
-```
-question-generator-api/
-├── .env                        # Environment variables
-├── main.py                     # FastAPI application entrypoint
-├── requirements.txt            # Dependencies
-├── README.md                   # This file
-├── app/
-│   ├── __init__.py
-│   ├── auth/                   # Authentication
-│   ├── models/                 # Pydantic models
-│   ├── routes/                 # API routes
-│   ├── services/               # Business logic
-│   ├── config/                 # Configuration
-│   └── utils/                  # Utility functions
-└── tests/                      # Test files
-```
-
 ## Getting Started
 
 1. **Clone the repository**

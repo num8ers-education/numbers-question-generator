@@ -145,7 +145,7 @@ const curricula = [
   }
 ];
 
-export default function CurriculaPage() {
+export default function GeneratePage() {
   const [view, setView] = useState<'curricula' | 'courses' | 'units'>('curricula');
   const [selectedCurriculum, setSelectedCurriculum] = useState<any>(null);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
@@ -172,7 +172,7 @@ export default function CurriculaPage() {
 
   // Title based on current view
   const getTitle = () => {
-    if (view === 'curricula') return 'Curricula';
+    if (view === 'curricula') return 'Select Curricula';
     if (view === 'courses') return `${selectedCurriculum.name} Courses`;
     if (view === 'units') return `${selectedCourse.name} Units`;
     return 'Curricula';

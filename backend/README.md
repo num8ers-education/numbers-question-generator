@@ -47,6 +47,8 @@ A FastAPI-based backend system for an educational platform that allows teachers 
    OPENAI_API_KEY=your_openai_api_key_here
    ```
 
+python -c "from app.auth.auth_handler import get_password_hash; from datetime import datetime; from bson import ObjectId; from pymongo import MongoClient; from dotenv import load_dotenv; import os; load_dotenv(); client = MongoClient(os.getenv('MONGO_URI')); db = client[os.getenv('DB_NAME')]; admin_id = ObjectId(); db.users.insert_one({'\_id': admin_id, 'email': 'admin@example.com', 'full_name': 'Admin User', 'role': 'admin', 'hashed_password': get_password_hash('admin123'), 'is_active': True, 'created_at': datetime.utcnow(), 'updated_at': datetime.utcnow()}); print(f'Admin user created with ID: {admin_id}')"
+
 5. **Run the application**
 
    ```bash

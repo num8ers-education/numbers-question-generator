@@ -1,7 +1,8 @@
+// src/components/question-generator/QuestionGeneratorPage.tsx
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -12,34 +13,35 @@ import {
   BookText,
 } from "lucide-react";
 import Link from "next/link";
+import { curriculumAPI, questionAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Static data for the dropdowns and options
 const questionTypes = [
-  { id: "multipleChoice", name: "Multiple Choice (Single Answer)", icon: "📝" },
-  { id: "multipleAnswers", name: "Multiple Answers", icon: "✅" },
-  { id: "trueFalse", name: "True/False", icon: "⚖️" },
-  { id: "fillBlank", name: "Fill-in-the-blank", icon: "📝" },
-  { id: "longAnswer", name: "Long Answer", icon: "📄" },
+  { id: "MCQ", name: "Multiple Choice (Single Answer)", icon: "📝" },
+  { id: "MultipleAnswer", name: "Multiple Answers", icon: "✅" },
+  { id: "True/False", name: "True/False", icon: "⚖️" },
+  { id: "Fill-in-the-blank", name: "Fill-in-the-blank", icon: "📝" },
 ];
 
 const difficultyLevels = [
   {
-    id: "easy",
+    id: "Easy",
     name: "Easy",
     color: "bg-green-100 text-green-800 border-green-200",
   },
   {
-    id: "medium",
+    id: "Medium",
     name: "Medium",
     color: "bg-yellow-100 text-yellow-800 border-yellow-200",
   },
-  { id: "hard", name: "Hard", color: "bg-red-100 text-red-800 border-red-200" },
+  { id: "Hard", name: "Hard", color: "bg-red-100 text-red-800 border-red-200" },
 ];
 
 const aiModels = [
   {
-    id: "gpt4o",
-    name: "GPT-4o",
+    id: "gpt4",
+    name: "GPT-4",
     icon: <Brain className="h-5 w-5 text-purple-500" />,
   },
   {
@@ -59,20 +61,25 @@ const aiModels = [
   },
 ];
 
-// Mock data for display purposes
-const mockSelection = {
-  curriculum: "Advanced Placement (AP)",
-  course: "AP Calculus AB",
-  unit: "Limits and Continuity",
-};
-
 export default function QuestionGeneratorPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
 
   // Extract curriculum, course, and unit IDs directly from URL params
-  const curriculumId = params.curriculumId;
-  const courseId = params.courseId;
-  const unitId = params.unitId;
+  const curriculumId = params.curriculumId as string;
+  const courseId = params.courseId as string;
+  const unitId = params.unitId as string;
+
+  // State for curriculum data
+  const [curriculumData, setCurriculumData] = useState({
+    curriculum: "",
+    course: "",
+    unit: "",
+    topicId: "", // We'll need to select a topic
+  });
+  const [topics, setTopics] = useState<any[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -80,14 +87,64 @@ export default function QuestionGeneratorPage() {
     questionType: "",
     difficultyLevel: "",
     questionSetName: "",
-    aiModel: "",
+    aiModel: "gpt4", // Default to GPT-4
   });
 
+  const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+
+  // Fetch curriculum data on load
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get curriculum details
+        const curriculum = await curriculumAPI.getCurriculum(curriculumId);
+        
+        // Get course details
+        const course = await curriculumAPI.getCourses(curriculumId).then(
+          courses => courses.find((c: any) => c.id === courseId)
+        );
+        
+        // Get unit details
+        const unit = await curriculumAPI.getUnits(courseId).then(
+          units => units.find((u: any) => u.id === unitId)
+        );
+        
+        // Get topics for this unit
+        const topicsData = await curriculumAPI.getTopics(unitId);
+        setTopics(topicsData);
+        
+        // Set the curriculum data
+        setCurriculumData({
+          curriculum: curriculum.name,
+          course: course ? course.name : "Unknown Course",
+          unit: unit ? unit.name : "Unknown Unit",
+          topicId: topicsData.length > 0 ? topicsData[0].id : "",
+        });
+        
+        // Set the first topic as selected
+        if (topicsData.length > 0) {
+          setSelectedTopic(topicsData[0].id);
+        }
+        
+      } catch (err) {
+        console.error("Error fetching curriculum data:", err);
+        setError("Failed to load curriculum data. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [curriculumId, courseId, unitId]);
 
   // Handle form changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -95,8 +152,13 @@ export default function QuestionGeneratorPage() {
     });
   };
 
+  // Handle topic selection
+  const handleTopicChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedTopic(e.target.value);
+  };
+
   // Handle selection of cards (for question type, difficulty, AI model)
-  const handleCardSelection = (field, value) => {
+  const handleCardSelection = (field: string, value: string) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -104,15 +166,35 @@ export default function QuestionGeneratorPage() {
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
+    setError(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsGenerating(false);
+    try {
+      // Prepare data for the API call
+      const generationData = {
+        topic_id: selectedTopic,
+        num_questions: formData.numberOfQuestions,
+        question_types: [formData.questionType],
+        difficulty: formData.difficultyLevel,
+        custom_prompt: null // We could add this option in the future
+      };
+      
+      // Make the API call
+      const generatedData = await questionAPI.generateQuestions(generationData);
+      
+      // Store the generated questions
+      setGeneratedQuestions(generatedData);
+      
+      // Set success state
       setIsGenerated(true);
-    }, 2000);
+    } catch (err: any) {
+      console.error("Error generating questions:", err);
+      setError(err.response?.data?.detail || "Failed to generate questions. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Check if the form is valid
@@ -122,9 +204,24 @@ export default function QuestionGeneratorPage() {
       formData.questionType !== "" &&
       formData.difficultyLevel !== "" &&
       formData.questionSetName.trim() !== "" &&
-      formData.aiModel !== ""
+      formData.aiModel !== "" &&
+      selectedTopic !== ""
     );
   };
+
+  // Handle viewing the generated questions
+  const handleViewQuestions = () => {
+    // In a real app, you'd navigate to a page to view the questions
+    router.push("/questions");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,19 +250,26 @@ export default function QuestionGeneratorPage() {
                 <p className="text-xs text-blue-700 font-medium mb-1">
                   CURRICULUM
                 </p>
-                <p className="font-medium">{mockSelection.curriculum}</p>
+                <p className="font-medium">{curriculumData.curriculum}</p>
               </div>
               <div className="bg-blue-50 p-3 rounded-lg">
                 <p className="text-xs text-blue-700 font-medium mb-1">COURSE</p>
-                <p className="font-medium">{mockSelection.course}</p>
+                <p className="font-medium">{curriculumData.course}</p>
               </div>
               <div className="bg-blue-50 p-3 rounded-lg">
                 <p className="text-xs text-blue-700 font-medium mb-1">UNIT</p>
-                <p className="font-medium">{mockSelection.unit}</p>
+                <p className="font-medium">{curriculumData.unit}</p>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Error display */}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* Question Generator Form */}
         {!isGenerated ? (
@@ -176,6 +280,26 @@ export default function QuestionGeneratorPage() {
               </h2>
 
               <form onSubmit={handleSubmit}>
+                {/* Topic Selection */}
+                <div className="mb-8">
+                  <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1">
+                    Topic
+                  </label>
+                  <select
+                    id="topic"
+                    name="topic"
+                    value={selectedTopic}
+                    onChange={handleTopicChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {topics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Number of Questions */}
                 <div className="mb-8">
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -248,9 +372,9 @@ export default function QuestionGeneratorPage() {
                         type="button"
                         className={`px-6 py-2 rounded-md flex items-center transition-all cursor-pointer border-2 ${
                           formData.difficultyLevel === level.id
-                            ? level.id === "easy"
+                            ? level.id === "Easy"
                               ? "bg-green-100 text-green-800 border-green-500"
-                              : level.id === "medium"
+                              : level.id === "Medium"
                               ? "bg-yellow-100 text-yellow-800 border-yellow-500"
                               : "bg-red-100 text-red-800 border-red-500"
                             : "bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
@@ -321,7 +445,7 @@ export default function QuestionGeneratorPage() {
                     disabled={!isFormValid() || isGenerating}
                     className={`w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white ${
                       isFormValid() && !isGenerating
-                        ? "bg-blue-600 hover:bg-blue-700"
+                        ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                         : "bg-gray-400 cursor-not-allowed"
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors`}
                   >
@@ -378,10 +502,7 @@ export default function QuestionGeneratorPage() {
                 <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3">
                   <button
                     className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    onClick={() => {
-                      // In a real app, this would navigate to the questions page
-                      window.location.href = "/questions";
-                    }}
+                    onClick={handleViewQuestions}
                   >
                     View Questions
                   </button>
@@ -389,11 +510,10 @@ export default function QuestionGeneratorPage() {
                     className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                     onClick={() => {
                       setFormData({
-                        numberOfQuestions: 3,
+                        ...formData,
                         questionType: "",
                         difficultyLevel: "",
                         questionSetName: "",
-                        aiModel: "",
                       });
                       setIsGenerated(false);
                     }}

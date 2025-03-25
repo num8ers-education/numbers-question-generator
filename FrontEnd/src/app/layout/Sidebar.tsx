@@ -17,7 +17,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutGrid size={20} />, href: '/' },
     { name: 'Generate Questions', icon: <Sparkles size={20} />, href: '/generate' },
-    { name: 'Questions', icon: <FileQuestion size={20} />, href: '/questions' },
+    { name: 'My Questions', icon: <FileQuestion size={20} />, href: '/questions' },
     { name: 'Analytics', icon: <BarChart3 size={20} />, href: '/analytics' },
     { name: 'Settings', icon: <Settings size={20} />, href: '/settings' },
   ];

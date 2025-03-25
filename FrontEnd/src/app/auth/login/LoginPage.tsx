@@ -1,45 +1,22 @@
-// src/components/auth/LoginPage.tsx
+// src/app/auth/login/LoginPage.tsx
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const router = useRouter();
-
-  // Static credentials for demo
-  const validCredentials = {
-    email: "admin@example.com",
-    password: "password123",
-  };
+  
+  const { login, isLoading, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    // Simulate API request delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Check credentials against static data
-    if (
-      email === validCredentials.email &&
-      password === validCredentials.password
-    ) {
-      // Redirect to dashboard on successful login
-      router.push("/dashboard");
-    } else {
-      setError("Invalid email or password");
-      setIsLoading(false);
-    }
+    await login(email, password);
+    // No need to handle navigation here - the auth context will do it
   };
 
   return (
@@ -179,7 +156,7 @@ export default function LoginPage() {
             <p className="text-center text-sm text-gray-600">
               <span>Demo credentials: </span>
               <span className="font-semibold">
-                admin@example.com / password123
+                admin@example.com / admin123
               </span>
             </p>
           </div>

@@ -1,4 +1,13 @@
+// src/app/dashboard/DashboardStatsCards.tsx
 import { BookOpen, FileQuestion, Clock, Users } from "lucide-react";
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  change?: string;
+  changeType?: "increase" | "decrease" | "neutral";
+}
 
 const StatCard = ({
   icon,
@@ -6,13 +15,7 @@ const StatCard = ({
   value,
   change,
   changeType,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  change?: string;
-  changeType?: "increase" | "decrease" | "neutral";
-}) => {
+}: StatCardProps) => {
   const getChangeColor = () => {
     if (!changeType) return "text-gray-500";
     return {
@@ -36,34 +39,51 @@ const StatCard = ({
   );
 };
 
-const DashboardStatsCards = () => {
+interface DashboardStatsCardsProps {
+  totalCurricula: number;
+  totalQuestions: number;
+  avgGenerationTime: number;
+  activeUsers: number;
+}
+
+const DashboardStatsCards = ({
+  totalCurricula,
+  totalQuestions,
+  avgGenerationTime,
+  activeUsers,
+}: DashboardStatsCardsProps) => {
+  // Format numbers for display
+  const formatNumber = (num: number) => {
+    return num >= 1000 ? num.toLocaleString() : num.toString();
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <StatCard
         icon={<BookOpen size={24} />}
         label="Total Curricula"
-        value="24"
+        value={formatNumber(totalCurricula)}
         change="+3 since last month"
         changeType="increase"
       />
       <StatCard
         icon={<FileQuestion size={24} />}
         label="Total Questions"
-        value="4,856"
+        value={formatNumber(totalQuestions)}
         change="+457 since last month"
         changeType="increase"
       />
       <StatCard
         icon={<Clock size={24} />}
         label="Avg. Generation Time"
-        value="1.8s"
+        value={`${avgGenerationTime.toFixed(1)}s`}
         change="-0.3s since last month"
         changeType="increase"
       />
       <StatCard
         icon={<Users size={24} />}
         label="Active Users"
-        value="187"
+        value={formatNumber(activeUsers)}
         change="+24 since last month"
         changeType="increase"
       />

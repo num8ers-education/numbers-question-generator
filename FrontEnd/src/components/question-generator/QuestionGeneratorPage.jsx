@@ -321,7 +321,7 @@ export default function QuestionGeneratorPage() {
                     disabled={!isFormValid() || isGenerating}
                     className={`w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white ${
                       isFormValid() && !isGenerating
-                        ? "bg-blue-600 hover:bg-blue-700"
+                        ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                         : "bg-gray-400 cursor-not-allowed"
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors`}
                   >

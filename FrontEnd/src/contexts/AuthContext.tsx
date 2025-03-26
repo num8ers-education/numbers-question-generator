@@ -68,10 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      document.cookie = `token=${response.access_token}; path=/; max-age=86400`;
       
       // Redirect based on role
       if (userData.role === 'admin' || userData.role === 'teacher') {
+        console.log('Login successful, redirecting to dashboard');
         router.push('/dashboard');
       } else {
         router.push('/student/dashboard');

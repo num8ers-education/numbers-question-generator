@@ -8,7 +8,8 @@ import {
   Settings, 
   BarChart3, 
   LogOut,
-  Sparkles
+  Sparkles,
+  BookOpen
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -16,6 +17,7 @@ const Sidebar = () => {
   
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutGrid size={20} />, href: '/' },
+    { name: 'All Curriculums', icon: <BookOpen size={20} />, href: '/curricula' },
     { name: 'Generate Questions', icon: <Sparkles size={20} />, href: '/generate' },
     { name: 'My Questions', icon: <FileQuestion size={20} />, href: '/questions' },
     { name: 'Analytics', icon: <BarChart3 size={20} />, href: '/analytics' },

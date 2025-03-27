@@ -2,7 +2,6 @@ import os
 import json
 import hashlib
 from typing import List, Dict, Any, Optional
-import openai
 from datetime import datetime
 
 from app.config.db import (
@@ -16,8 +15,8 @@ from app.models.question import (
 )
 from bson import ObjectId
 
-# Load OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Load OpenAI API key from environment
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 class AIService:
     """Service for interacting with AI to generate questions"""
@@ -257,7 +256,14 @@ class AIService:
     async def _call_openai(prompt: str) -> str:
         """Call OpenAI API to generate questions"""
         try:
-            response = await openai.ChatCompletion.acreate(
+            # Import here to avoid importing if not needed
+            from openai import AsyncOpenAI
+            
+            # Initialize client
+            client = AsyncOpenAI(api_key=openai_api_key)
+            
+            # Make the API call
+            response = await client.chat.completions.create(
                 model="gpt-4",  # Or any other appropriate model
                 messages=[
                     {"role": "system", "content": "You are an expert in creating educational assessment questions."},

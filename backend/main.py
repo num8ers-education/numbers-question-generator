@@ -10,6 +10,7 @@ from app.routes.question_routes import router as question_router
 from app.routes.prompt_routes import router as prompt_router
 from app.routes.teacher_routes import router as teacher_router
 from app.routes.student_routes import router as student_router
+from app.routes.student_auth_routes import router as student_auth_router
 
 app = FastAPI(
     title="AI Question Generator API",
@@ -34,6 +35,7 @@ app.include_router(question_router, prefix="/api")
 app.include_router(prompt_router, prefix="/api")
 app.include_router(teacher_router, prefix="/api")
 app.include_router(student_router, prefix="/api")
+app.include_router(student_auth_router, prefix="/api")
 
 @app.get("/")
 async def root():

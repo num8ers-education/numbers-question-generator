@@ -1,15 +1,22 @@
 // src/contexts/AuthContext.tsx
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { authAPI } from '@/services/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useRouter } from "next/navigation";
+import { authAPI } from "@/services/api";
+import toast from "react-hot-toast";
 
 type User = {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'teacher' | 'student';
+  role: "admin" | "teacher" | "student";
 };
 
 type AuthContextType = {
@@ -33,14 +40,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const storedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
+        setIsLoading(true);
+
+        const storedUser = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
 
         if (storedUser && token) {
           setUser(JSON.parse(storedUser));
+
+          // Set the token in cookie for middleware
+          if (!document.cookie.includes("token=")) {
+            document.cookie = `token=${token}; path=/; max-age=86400`;
+          }
         }
       } catch (err) {
-        console.error('Authentication check failed:', err);
+        console.error("Authentication check failed:", err);
       } finally {
         setIsLoading(false);
       }
@@ -53,33 +67,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await authAPI.login(email, password);
-      
-      // Save auth data
-      localStorage.setItem('token', response.access_token);
-      
+
       const userData = {
         id: response.user_id,
         email: email,
-        full_name: response.full_name || 'User',
-        role: response.role
+        full_name: response.full_name || "User",
+        role: response.role,
       };
-      
+
       setUser(userData);
       document.cookie = `token=${response.access_token}; path=/; max-age=86400`;
-      
+
+      toast.success("Login successful!");
+
       // Redirect based on role
-      if (userData.role === 'admin' || userData.role === 'teacher') {
-        console.log('Login successful, redirecting to dashboard');
-        router.push('/dashboard');
+      if (userData.role === "admin" || userData.role === "teacher") {
+        router.push("/dashboard");
       } else {
-        router.push('/student/dashboard');
+        router.push("/student/dashboard");
       }
     } catch (err: any) {
-      console.error('Login failed:', err);
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      console.error("Login failed:", err);
+      setError(
+        err.response?.data?.detail ||
+          "Login failed. Please check your credentials."
+      );
+      toast.error(
+        err.response?.data?.detail ||
+          "Login failed. Please check your credentials."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     authAPI.logout();
     setUser(null);
-    router.push('/');
+    toast.success("Logged out successfully");
+    router.push("/");
   };
 
   const value = {
@@ -98,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     login,
     logout,
-    error
+    error,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -107,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

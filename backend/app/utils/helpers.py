@@ -1,8 +1,12 @@
+# backend/app/utils/helpers.py - Add slug generation utilities
+
 import re
 import hashlib
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 import json
+from slugify import slugify
+import uuid
 
 def convert_object_id_to_str(obj: Any) -> Any:
     """
@@ -111,3 +115,67 @@ def validate_correct_answer(correct_answer: Union[str, List[str]], question_type
     
     # For Fill-in-the-blank, we just need a non-empty string
     return len(correct_answer) > 0
+
+def generate_slug(name: str, add_random: bool = True) -> str:
+    """
+    Generate a URL-friendly slug from a name
+    
+    Args:
+        name: The string to convert to a slug
+        add_random: Whether to add a random suffix for uniqueness
+        
+    Returns:
+        A URL-friendly slug
+    """
+    # Generate base slug
+    base_slug = slugify(name)
+    
+    # Add a short random suffix if requested
+    if add_random:
+        # Generate a short unique ID (first 8 chars of a UUID)
+        short_id = str(uuid.uuid4())[:8]
+        return f"{base_slug}-{short_id}"
+    
+    return base_slug
+
+def check_slug_exists(collection, slug: str) -> bool:
+    """
+    Check if a slug already exists in a collection
+    
+    Args:
+        collection: MongoDB collection to check
+        slug: The slug to check
+        
+    Returns:
+        True if slug exists, False otherwise
+    """
+    return collection.find_one({"slug": slug}) is not None
+
+def create_unique_slug(collection, name: str) -> str:
+    """
+    Create a unique slug for a collection
+    
+    Args:
+        collection: MongoDB collection to check for uniqueness
+        name: The name to create a slug from
+        
+    Returns:
+        A unique slug for the collection
+    """
+    # First try without random suffix
+    base_slug = generate_slug(name, add_random=False)
+    
+    # Check if it exists
+    if not check_slug_exists(collection, base_slug):
+        return base_slug
+    
+    # If it exists, add a random suffix
+    unique_slug = generate_slug(name, add_random=True)
+    
+    # In the rare case that even this exists, keep trying with new UUIDs
+    attempt = 1
+    while check_slug_exists(collection, unique_slug) and attempt < 5:
+        unique_slug = generate_slug(name, add_random=True)
+        attempt += 1
+    
+    return unique_slug

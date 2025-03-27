@@ -1,8 +1,16 @@
 {
   "info": {
     "name": "AI Question Generator API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection for testing the AI Question Generator API"
   },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
   "item": [
     {
       "name": "Authentication",
@@ -16,7 +24,7 @@
                 "exec": [
                   "var jsonData = pm.response.json();",
                   "if (jsonData.access_token) {",
-                  " pm.environment.set('token', jsonData.access_token);",
+                  "  pm.environment.set('token', jsonData.access_token);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -33,12 +41,389 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n \"email\": \"admin@example.com\",\n \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
             },
+            {
+              "name": "Prompt Templates",
+              "item": [
+                {
+                  "name": "Create Prompt Template",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = pm.response.json();",
+                          "if (jsonData.id) {",
+                          "  pm.environment.set('prompt_id', jsonData.id);",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Physics Question Template\",\n  \"description\": \"Template optimized for physics questions\",\n  \"template\": \"You are an expert physics educator. Generate {num_questions} questions on the topic '{topic}'...\",\n  \"is_default\": false\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get All Prompt Templates",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Default Prompt Template",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts/default",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts",
+                        "default"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Prompt Template by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts/{{prompt_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts",
+                        "{{prompt_id}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Prompt Template",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Updated Physics Template\",\n  \"description\": \"Updated template for physics\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts/{{prompt_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts",
+                        "{{prompt_id}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Set Prompt as Default",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts/{{prompt_id}}/set-default",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts",
+                        "{{prompt_id}}",
+                        "set-default"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete Prompt Template",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/prompts/{{prompt_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "prompts",
+                        "{{prompt_id}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Teacher APIs",
+              "item": [
+                {
+                  "name": "Get Teacher Dashboard",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/teacher/dashboard",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "teacher",
+                        "dashboard"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Teacher Activity",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/teacher/activity?days=30",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "teacher",
+                        "activity"
+                      ],
+                      "query": [
+                        {
+                          "key": "days",
+                          "value": "30"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Student APIs",
+              "item": [
+                {
+                  "name": "Get Student Dashboard",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{student_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/student/dashboard",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "student",
+                        "dashboard"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Available Question Sets",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{student_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/student/question-sets",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "student",
+                        "question-sets"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Topic Questions",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{student_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/student/topic/{{topic_id}}/questions",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "student",
+                        "topic",
+                        "{{topic_id}}",
+                        "questions"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Generate Practice Quiz",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{student_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"topic_ids\": [\"{{topic_id}}\"],\n  \"question_count\": 5,\n  \"difficulty\": \"Medium\",\n  \"question_types\": [\"MCQ\", \"True/False\"]\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/student/practice-quiz",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "student",
+                        "practice-quiz"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            }
             "url": {
-              "raw": "{{base_url}}/login",
-              "host": ["{{base_url}}"],
-              "path": ["login"]
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
             }
           },
           "response": []
@@ -74,9 +459,402 @@
               ]
             },
             "url": {
-              "raw": "{{base_url}}/oauth/token",
-              "host": ["{{base_url}}"],
-              "path": ["oauth", "token"]
+              "raw": "{{base_url}}/api/oauth/token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "oauth",
+                "token"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Question Management",
+      "item": [
+        {
+          "name": "Create Question Manually",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "  pm.environment.set('question_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_text\": \"What is Newton's First Law of Motion?\",\n  \"question_type\": \"MCQ\",\n  \"options\": [\n    \"An object at rest stays at rest unless acted upon by an external force\",\n    \"Force equals mass times acceleration\",\n    \"For every action there is an equal and opposite reaction\",\n    \"Energy cannot be created or destroyed\"\n  ],\n  \"correct_answer\": \"An object at rest stays at rest unless acted upon by an external force\",\n  \"explanation\": \"Newton's First Law of Motion states that an object will remain at rest or in uniform motion in a straight line unless acted upon by an external force.\",\n  \"difficulty\": \"Medium\",\n  \"topic_id\": \"{{topic_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/questions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Questions with Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/questions?topic_id={{topic_id}}&difficulty=Medium&question_type=MCQ",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "topic_id",
+                  "value": "{{topic_id}}"
+                },
+                {
+                  "key": "difficulty",
+                  "value": "Medium"
+                },
+                {
+                  "key": "question_type",
+                  "value": "MCQ"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Question by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/questions/{{question_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions",
+                "{{question_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Questions with AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_id\": \"{{topic_id}}\",\n  \"num_questions\": 2,\n  \"question_types\": [\"MCQ\", \"True/False\"],\n  \"difficulty\": \"Medium\",\n  \"custom_prompt\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions/ai/generate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions",
+                "ai",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Regenerate Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_id\": \"{{question_id}}\",\n  \"with_custom_prompt\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions/ai/regenerate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions",
+                "ai",
+                "regenerate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_text\": \"Updated question text: What is Newton's First Law of Motion?\",\n  \"explanation\": \"Updated explanation for Newton's First Law of Motion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions/{{question_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions",
+                "{{question_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/questions/{{question_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions",
+                "{{question_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Delete Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_ids\": [\"{{question_id}}\", \"question_id_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions/batch/delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "questions",
+                "batch",
+                "delete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Student Auth",
+      "item": [
+        {
+          "name": "Student Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@example.com\",\n  \"password\": \"student123\",\n  \"full_name\": \"Student User\",\n  \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/student/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "  pm.environment.set('student_token', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@example.com\",\n  \"password\": \"student123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/student/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
             }
           },
           "response": []
@@ -102,12 +880,17 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n \"email\": \"teacher@example.com\",\n \"password\": \"teacher123\",\n \"full_name\": \"Teacher User\",\n \"role\": \"teacher\"\n}"
+              "raw": "{\n  \"email\": \"teacher@example.com\",\n  \"password\": \"teacher123\",\n  \"full_name\": \"Teacher User\",\n  \"role\": \"teacher\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": []
@@ -123,9 +906,14 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": []
@@ -141,9 +929,15 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/users/user_id_here",
-              "host": ["{{base_url}}"],
-              "path": ["users", "user_id_here"]
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{user_id}}"
+              ]
             }
           },
           "response": []
@@ -164,12 +958,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n \"full_name\": \"Updated Teacher Name\"\n}"
+              "raw": "{\n  \"full_name\": \"Updated Teacher Name\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/users/user_id_here",
-              "host": ["{{base_url}}"],
-              "path": ["users", "user_id_here"]
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{user_id}}"
+              ]
             }
           },
           "response": []
@@ -185,9 +985,15 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/users/user_id_here",
-              "host": ["{{base_url}}"],
-              "path": ["users", "user_id_here"]
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{user_id}}"
+              ]
             }
           },
           "response": []
@@ -208,12 +1014,69 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n \"new_password\": \"newpassword123\"\n}"
+              "raw": "{\n  \"new_password\": \"newpassword123\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/users/user_id_here/reset-password",
-              "host": ["{{base_url}}"],
-              "path": ["users", "user_id_here", "reset-password"]
+              "raw": "{{base_url}}/api/users/{{user_id}}/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{user_id}}",
+                "reset-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/deactivate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{user_id}}",
+                "deactivate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/activate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{user_id}}",
+                "activate"
+              ]
             }
           },
           "response": []
@@ -228,6 +1091,20 @@
           "item": [
             {
               "name": "Create Curriculum",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "  pm.environment.set('curriculum_id', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "method": "POST",
                 "header": [
@@ -242,12 +1119,18 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n \"name\": \"K-12 Science\",\n \"description\": \"Standard Science curriculum for K-12 students\"\n}"
+                  "raw": "{\n  \"name\": \"First Law of Motion\",\n  \"description\": \"An object at rest stays at rest unless acted upon by an external force\",\n  \"unit_id\": \"{{unit_id}}\"\n}""raw",
+                  "raw": "{\n  \"name\": \"K-12 Science\",\n  \"description\": \"Standard Science curriculum for K-12 students\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/curriculum",
-                  "host": ["{{base_url}}"],
-                  "path": ["curriculum"]
+                  "raw": "{{base_url}}/api/curriculum",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "curriculum"
+                  ]
                 }
               },
               "response": []
@@ -263,9 +1146,14 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/curriculum",
-                  "host": ["{{base_url}}"],
-                  "path": ["curriculum"]
+                  "raw": "{{base_url}}/api/curriculum",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "curriculum"
+                  ]
                 }
               },
               "response": []
@@ -281,9 +1169,15 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/curriculum/curriculum_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["curriculum", "curriculum_id_here"]
+                  "raw": "{{base_url}}/api/curriculum/{{curriculum_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "curriculum",
+                    "{{curriculum_id}}"
+                  ]
                 }
               },
               "response": []
@@ -299,9 +1193,16 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/curriculum/curriculum_id_here/full",
-                  "host": ["{{base_url}}"],
-                  "path": ["curriculum", "curriculum_id_here", "full"]
+                  "raw": "{{base_url}}/api/curriculum/{{curriculum_id}}/full",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "curriculum",
+                    "{{curriculum_id}}",
+                    "full"
+                  ]
                 }
               },
               "response": []
@@ -322,12 +1223,18 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n \"name\": \"Updated K-12 Science\",\n \"description\": \"Updated description\"\n}"
+                  "raw": "{\n  \"name\": \"Updated K-12 Science\",\n  \"description\": \"Updated description for K-12 Science curriculum\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/curriculum/curriculum_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["curriculum", "curriculum_id_here"]
+                  "raw": "{{base_url}}/api/curriculum/{{curriculum_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "curriculum",
+                    "{{curriculum_id}}"
+                  ]
                 }
               },
               "response": []
@@ -343,9 +1250,15 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/curriculum/curriculum_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["curriculum", "curriculum_id_here"]
+                  "raw": "{{base_url}}/api/curriculum/{{curriculum_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "curriculum",
+                    "{{curriculum_id}}"
+                  ]
                 }
               },
               "response": []
@@ -357,6 +1270,20 @@
           "item": [
             {
               "name": "Create Subject",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "  pm.environment.set('subject_id', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "method": "POST",
                 "header": [
@@ -371,12 +1298,17 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n \"name\": \"Physics\",\n \"description\": \"High school physics\",\n \"curriculum_id\": \"curriculum_id_here\"\n}"
+                  "raw": "{\n  \"name\": \"Physics\",\n  \"description\": \"High school physics\",\n  \"curriculum_id\": \"{{curriculum_id}}\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/subjects",
-                  "host": ["{{base_url}}"],
-                  "path": ["subjects"]
+                  "raw": "{{base_url}}/api/subjects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects"
+                  ]
                 }
               },
               "response": []
@@ -392,13 +1324,41 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/subjects?curriculum_id=curriculum_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["subjects"],
+                  "raw": "{{base_url}}/api/subjects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Subjects by Curriculum",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/subjects?curriculum_id={{curriculum_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects"
+                  ],
                   "query": [
                     {
                       "key": "curriculum_id",
-                      "value": "curriculum_id_here"
+                      "value": "{{curriculum_id}}"
                     }
                   ]
                 }
@@ -416,9 +1376,96 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/subjects/subject_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["subjects", "subject_id_here"]
+                  "raw": "{{base_url}}/api/subjects/{{subject_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects",
+                    "{{subject_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Subject with Hierarchy",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/subjects/{{subject_id}}/full",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects",
+                    "{{subject_id}}",
+                    "full"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Subject",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Advanced Physics\",\n  \"description\": \"Updated description for physics\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/subjects/{{subject_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects",
+                    "{{subject_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Subject",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/subjects/{{subject_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "subjects",
+                    "{{subject_id}}"
+                  ]
                 }
               },
               "response": []
@@ -430,6 +1477,20 @@
           "item": [
             {
               "name": "Create Course",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "  pm.environment.set('course_id', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "method": "POST",
                 "header": [
@@ -444,12 +1505,17 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n \"name\": \"Mechanics\",\n \"description\": \"Study of motion and forces\",\n \"subject_id\": \"subject_id_here\"\n}"
+                  "raw": "{\n  \"name\": \"Mechanics\",\n  \"description\": \"Study of motion and forces\",\n  \"subject_id\": \"{{subject_id}}\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/courses",
-                  "host": ["{{base_url}}"],
-                  "path": ["courses"]
+                  "raw": "{{base_url}}/api/courses",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses"
+                  ]
                 }
               },
               "response": []
@@ -465,14 +1531,147 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/courses?subject_id=subject_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["courses"],
+                  "raw": "{{base_url}}/api/courses",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Courses by Subject",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/courses?subject_id={{subject_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses"
+                  ],
                   "query": [
                     {
                       "key": "subject_id",
-                      "value": "subject_id_here"
+                      "value": "{{subject_id}}"
                     }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Course by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/courses/{{course_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses",
+                    "{{course_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Course with Hierarchy",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/courses/{{course_id}}/full",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses",
+                    "{{course_id}}",
+                    "full"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Course",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Advanced Mechanics\",\n  \"description\": \"Updated study of motion and forces\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/courses/{{course_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses",
+                    "{{course_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Course",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/courses/{{course_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "courses",
+                    "{{course_id}}"
                   ]
                 }
               },
@@ -485,6 +1684,20 @@
           "item": [
             {
               "name": "Create Unit",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "  pm.environment.set('unit_id', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "method": "POST",
                 "header": [
@@ -499,12 +1712,17 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n \"name\": \"Newton's Laws\",\n \"description\": \"Understanding Newton's Laws of Motion\",\n \"course_id\": \"course_id_here\"\n}"
+                  "raw": "{\n  \"name\": \"Newton's Laws\",\n  \"description\": \"Understanding Newton's Laws of Motion\",\n  \"course_id\": \"{{course_id}}\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/units",
-                  "host": ["{{base_url}}"],
-                  "path": ["units"]
+                  "raw": "{{base_url}}/api/units",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units"
+                  ]
                 }
               },
               "response": []
@@ -520,14 +1738,147 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/units?course_id=course_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["units"],
+                  "raw": "{{base_url}}/api/units",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Units by Course",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/units?course_id={{course_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units"
+                  ],
                   "query": [
                     {
                       "key": "course_id",
-                      "value": "course_id_here"
+                      "value": "{{course_id}}"
                     }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Unit by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/units/{{unit_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units",
+                    "{{unit_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Unit with Topics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/units/{{unit_id}}/full",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units",
+                    "{{unit_id}}",
+                    "full"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Unit",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Classical Mechanics: Newton's Laws\",\n  \"description\": \"Updated description for Newton's Laws of Motion\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/units/{{unit_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units",
+                    "{{unit_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Unit",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/units/{{unit_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "units",
+                    "{{unit_id}}"
                   ]
                 }
               },
@@ -540,6 +1891,20 @@
           "item": [
             {
               "name": "Create Topic",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "  pm.environment.set('topic_id', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "method": "POST",
                 "header": [
@@ -553,446 +1918,4 @@
                   }
                 ],
                 "body": {
-                  "mode": "raw",
-                  "raw": "{\n \"name\": \"First Law of Motion\",\n \"description\": \"An object at rest stays at rest...\",\n \"unit_id\": \"unit_id_here\"\n}"
-                },
-                "url": {
-                  "raw": "{{base_url}}/topics",
-                  "host": ["{{base_url}}"],
-                  "path": ["topics"]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Get All Topics",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/topics?unit_id=unit_id_here",
-                  "host": ["{{base_url}}"],
-                  "path": ["topics"],
-                  "query": [
-                    {
-                      "key": "unit_id",
-                      "value": "unit_id_here"
-                    }
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Question Management",
-      "item": [
-        {
-          "name": "Create Question Manually",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"question_text\": \"What is Newton's First Law of Motion?\",\n \"question_type\": \"MCQ\",\n \"options\": [\n \"An object at rest stays at rest unless acted upon by an external force\",\n \"Force equals mass times acceleration\",\n \"For every action there is an equal and opposite reaction\",\n \"Energy cannot be created or destroyed\"\n ],\n \"correct_answer\": \"An object at rest stays at rest unless acted upon by an external force\",\n \"explanation\": \"Newton's First Law of Motion states that an object will remain at rest or in uniform motion in a straight line unless acted upon by an external force.\",\n \"difficulty\": \"Medium\",\n \"topic_id\": \"topic_id_here\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/questions",
-              "host": ["{{base_url}}"],
-              "path": ["questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Questions",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/questions?topic_id=topic_id_here&difficulty=Medium&question_type=MCQ",
-              "host": ["{{base_url}}"],
-              "path": ["questions"],
-              "query": [
-                {
-                  "key": "topic_id",
-                  "value": "topic_id_here"
-                },
-                {
-                  "key": "difficulty",
-                  "value": "Medium"
-                },
-                {
-                  "key": "question_type",
-                  "value": "MCQ"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Generate Questions with AI",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"topic_id\": \"topic_id_here\",\n \"num_questions\": 5,\n \"question_types\": [\"MCQ\", \"True/False\"],\n \"difficulty\": \"Medium\",\n \"custom_prompt\": null\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/questions/ai/generate",
-              "host": ["{{base_url}}"],
-              "path": ["questions", "ai", "generate"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Regenerate Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"question_id\": \"question_id_here\",\n \"with_custom_prompt\": null\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/questions/ai/regenerate",
-              "host": ["{{base_url}}"],
-              "path": ["questions", "ai", "regenerate"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Question",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"question_text\": \"Updated question text\",\n \"explanation\": \"Updated explanation\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/questions/question_id_here",
-              "host": ["{{base_url}}"],
-              "path": ["questions", "question_id_here"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Question",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/questions/question_id_here",
-              "host": ["{{base_url}}"],
-              "path": ["questions", "question_id_here"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Batch Delete Questions",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"question_ids\": [\"id1\", \"id2\", \"id3\"]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/questions/batch/delete",
-              "host": ["{{base_url}}"],
-              "path": ["questions", "batch", "delete"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Prompt Templates",
-      "item": [
-        {
-          "name": "Create Prompt Template",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"name\": \"Physics Question Template\",\n \"description\": \"Template optimized for physics questions\",\n \"template\": \"You are an expert physics educator. Generate {num_questions} questions on the topic '{topic}'...\",\n \"is_default\": false\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/prompts",
-              "host": ["{{base_url}}"],
-              "path": ["prompts"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Prompt Templates",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/prompts",
-              "host": ["{{base_url}}"],
-              "path": ["prompts"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Default Prompt Template",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/prompts/default",
-              "host": ["{{base_url}}"],
-              "path": ["prompts", "default"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Set Prompt as Default",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/prompts/prompt_id_here/set-default",
-              "host": ["{{base_url}}"],
-              "path": ["prompts", "prompt_id_here", "set-default"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Teacher",
-      "item": [
-        {
-          "name": "Get Teacher Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/teacher/dashboard",
-              "host": ["{{base_url}}"],
-              "path": ["teacher", "dashboard"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Teacher Activity",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/teacher/activity?days=30",
-              "host": ["{{base_url}}"],
-              "path": ["teacher", "activity"],
-              "query": [
-                {
-                  "key": "days",
-                  "value": "30"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Student",
-      "item": [
-        {
-          "name": "Get Student Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/student/dashboard",
-              "host": ["{{base_url}}"],
-              "path": ["student", "dashboard"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Available Question Sets",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/student/question-sets",
-              "host": ["{{base_url}}"],
-              "path": ["student", "question-sets"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Topic Questions",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/student/topic/topic_id_here/questions",
-              "host": ["{{base_url}}"],
-              "path": ["student", "topic", "topic_id_here", "questions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Generate Practice Quiz",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n \"topic_ids\": [\"topic_id_1\", \"topic_id_2\"],\n \"question_count\": 10,\n \"difficulty\": \"Medium\",\n \"question_types\": [\"MCQ\", \"True/False\"]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/student/practice-quiz",
-              "host": ["{{base_url}}"],
-              "path": ["student", "practice-quiz"]
-            }
-          },
-          "response": []
-        }
-      ]
-    }
-  ]
-}
+                  "mode":

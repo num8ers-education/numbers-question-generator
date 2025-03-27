@@ -1,22 +1,45 @@
 // src/app/auth/login/LoginPage.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
-  const { login, isLoading, error } = useAuth();
+
+  const { login, isLoading, error, isAuthenticated, user } = useAuth();
+  const router = useRouter();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const redirectPath =
+        user.role === "student" ? "/student/dashboard" : "/dashboard";
+      router.push(redirectPath);
+    }
+  }, [isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password);
-    // No need to handle navigation here - the auth context will do it
+
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
+    try {
+      await login(email, password);
+      // No need to handle navigation here - useEffect will handle it
+    } catch (err) {
+      console.error("Login error:", err);
+      // The auth context will handle the error message
+    }
   };
 
   return (
@@ -24,7 +47,7 @@ export default function LoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
-            {/* You can replace this with your actual logo */}
+            {/* App logo */}
             <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center">
               <span className="text-white text-2xl font-bold">QG</span>
             </div>

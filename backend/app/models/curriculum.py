@@ -1,3 +1,5 @@
+# backend/app/models/curriculum.py - Adding slug fields to models
+
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -6,6 +8,7 @@ from datetime import datetime
 class CurriculumBase(BaseModel):
     name: str
     description: Optional[str] = None
+    slug: Optional[str] = None  # Added slug field
 
 class CurriculumCreate(CurriculumBase):
     pass
@@ -13,6 +16,7 @@ class CurriculumCreate(CurriculumBase):
 class CurriculumUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    slug: Optional[str] = None  # Added slug field
 
 class CurriculumInDB(CurriculumBase):
     id: str = Field(..., alias="_id")
@@ -31,6 +35,7 @@ class SubjectBase(BaseModel):
     name: str
     description: Optional[str] = None
     curriculum_id: str
+    slug: Optional[str] = None  # Added slug field
 
 class SubjectCreate(SubjectBase):
     pass
@@ -39,6 +44,7 @@ class SubjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     curriculum_id: Optional[str] = None
+    slug: Optional[str] = None  # Added slug field
 
 class SubjectInDB(SubjectBase):
     id: str = Field(..., alias="_id")
@@ -57,6 +63,7 @@ class CourseBase(BaseModel):
     name: str
     description: Optional[str] = None
     subject_id: str
+    slug: Optional[str] = None  # Added slug field
 
 class CourseCreate(CourseBase):
     pass
@@ -65,6 +72,7 @@ class CourseUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     subject_id: Optional[str] = None
+    slug: Optional[str] = None  # Added slug field
 
 class CourseInDB(CourseBase):
     id: str = Field(..., alias="_id")
@@ -83,6 +91,7 @@ class UnitBase(BaseModel):
     name: str
     description: Optional[str] = None
     course_id: str
+    slug: Optional[str] = None  # Added slug field
 
 class UnitCreate(UnitBase):
     pass
@@ -91,6 +100,7 @@ class UnitUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     course_id: Optional[str] = None
+    slug: Optional[str] = None  # Added slug field
 
 class UnitInDB(UnitBase):
     id: str = Field(..., alias="_id")
@@ -109,6 +119,7 @@ class TopicBase(BaseModel):
     name: str
     description: Optional[str] = None
     unit_id: str
+    slug: Optional[str] = None  # Added slug field
 
 class TopicCreate(TopicBase):
     pass
@@ -117,6 +128,7 @@ class TopicUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     unit_id: Optional[str] = None
+    slug: Optional[str] = None  # Added slug field
 
 class TopicInDB(TopicBase):
     id: str = Field(..., alias="_id")

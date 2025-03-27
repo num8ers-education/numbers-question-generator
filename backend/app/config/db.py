@@ -1,3 +1,5 @@
+# backend/app/config/db.py - Update indexes to include slug fields
+
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
@@ -26,8 +28,13 @@ prompts_collection = db["prompts"]
 # Create indexes
 users_collection.create_index("email", unique=True)
 curriculum_collection.create_index("name", unique=True)
+curriculum_collection.create_index("slug", unique=True)  # Add slug index
 subjects_collection.create_index([("name", 1), ("curriculum_id", 1)], unique=True)
+subjects_collection.create_index("slug", unique=True)  # Add slug index
 courses_collection.create_index([("name", 1), ("subject_id", 1)], unique=True)
+courses_collection.create_index("slug", unique=True)  # Add slug index
 units_collection.create_index([("name", 1), ("course_id", 1)], unique=True)
+units_collection.create_index("slug", unique=True)  # Add slug index
 topics_collection.create_index([("name", 1), ("unit_id", 1)], unique=True)
+topics_collection.create_index("slug", unique=True)  # Add slug index
 questions_collection.create_index("question_text")

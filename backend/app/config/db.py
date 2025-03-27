@@ -6,7 +6,7 @@ import os
 load_dotenv()
 
 # MongoDB connection details
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://question_generator_db:AkJEPFZWqFq1EEZY@cluster0.7u93pus.mongodb.net/question_generator_db?retryWrites=true&w=majority")
 DB_NAME = os.getenv("DB_NAME", "question_generator_db")
 
 # Connect to MongoDB

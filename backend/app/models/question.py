@@ -37,7 +37,7 @@ class QuestionUpdate(BaseModel):
     topic_id: Optional[str] = None
 
 class QuestionInDB(QuestionBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -48,6 +48,9 @@ class QuestionInDB(QuestionBase):
     ai_prompt: Optional[str] = None
     # To prevent duplicate generations
     content_hash: Optional[str] = None
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class QuestionOut(QuestionBase):
     id: str
@@ -96,7 +99,10 @@ class PromptTemplateUpdate(BaseModel):
     is_default: Optional[bool] = None
 
 class PromptTemplateInDB(PromptTemplate):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class PromptTemplateOut(PromptTemplate):
     id: str

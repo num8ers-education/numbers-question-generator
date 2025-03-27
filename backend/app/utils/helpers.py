@@ -5,7 +5,7 @@ import hashlib
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 import json
-from slugify import slugify
+from slugify import slugify as python_slugify
 import uuid
 
 def convert_object_id_to_str(obj: Any) -> Any:
@@ -115,6 +115,12 @@ def validate_correct_answer(correct_answer: Union[str, List[str]], question_type
     
     # For Fill-in-the-blank, we just need a non-empty string
     return len(correct_answer) > 0
+
+def slugify(text: str) -> str:
+    """Wrapper around python-slugify to handle None values"""
+    if not text:
+        return ""
+    return python_slugify(text)
 
 def generate_slug(name: str, add_random: bool = True) -> str:
     """

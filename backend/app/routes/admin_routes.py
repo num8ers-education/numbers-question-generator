@@ -9,6 +9,7 @@ from app.config.db import users_collection
 from app.models.user import (
     UserCreate, UserUpdate, UserOut, UserRole, TokenData
 )
+from app.utils.db_utils import transform_object_id
 
 router = APIRouter(tags=["Admin"])
 
@@ -51,7 +52,7 @@ async def create_user(user: UserCreate, token_data: TokenData = Depends(admin_re
     # Fetch the created user (without password)
     created_user = users_collection.find_one({"_id": result.inserted_id})
     
-    return created_user
+    return transform_object_id(created_user)
 
 @router.get("/users", response_model=List[UserOut])
 async def get_all_users(
@@ -66,7 +67,7 @@ async def get_all_users(
         query["role"] = role
         
     users = users_collection.find(query).skip(skip).limit(limit)
-    return list(users)
+    return [transform_object_id(user) for user in users]
 
 @router.get("/users/{user_id}", response_model=UserOut)
 async def get_user(
@@ -80,7 +81,7 @@ async def get_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with ID {user_id} not found"
         )
-    return user
+    return transform_object_id(user)
 
 @router.put("/users/{user_id}", response_model=UserOut)
 async def update_user(
@@ -120,7 +121,7 @@ async def update_user(
     
     # Return the updated user
     updated_user = users_collection.find_one({"_id": user_oid})
-    return updated_user
+    return transform_object_id(updated_user)
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
@@ -215,7 +216,7 @@ async def deactivate_user(
     
     # Return the updated user
     updated_user = users_collection.find_one({"_id": user_oid})
-    return updated_user
+    return transform_object_id(updated_user)
 
 @router.post("/users/{user_id}/activate", response_model=UserOut)
 async def activate_user(
@@ -244,4 +245,4 @@ async def activate_user(
     
     # Return the updated user
     updated_user = users_collection.find_one({"_id": user_oid})
-    return updated_user
+    return transform_object_id(updated_user)

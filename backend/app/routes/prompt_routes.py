@@ -9,6 +9,7 @@ from app.models.question import (
     PromptTemplateCreate, PromptTemplateUpdate, PromptTemplateOut
 )
 from app.models.user import TokenData
+from app.utils.db_utils import transform_object_id
 
 router = APIRouter(tags=["Prompt Templates"])
 
@@ -52,7 +53,7 @@ async def create_prompt_template(prompt: PromptTemplateCreate, token_data: Token
     result = prompts_collection.insert_one(prompt_data)
     created_prompt = prompts_collection.find_one({"_id": result.inserted_id})
     
-    return created_prompt
+    return transform_object_id(created_prompt)
 
 @router.get("/prompts", response_model=List[PromptTemplateOut])
 async def get_all_prompt_templates(
@@ -62,7 +63,7 @@ async def get_all_prompt_templates(
 ):
     """Get all prompt templates"""
     prompts = prompts_collection.find().skip(skip).limit(limit)
-    return list(prompts)
+    return [transform_object_id(prompt) for prompt in prompts]
 
 @router.get("/prompts/default", response_model=PromptTemplateOut)
 async def get_default_prompt_template(
@@ -75,7 +76,7 @@ async def get_default_prompt_template(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No default prompt template found"
         )
-    return prompt
+    return transform_object_id(prompt)
 
 @router.get("/prompts/{prompt_id}", response_model=PromptTemplateOut)
 async def get_prompt_template(
@@ -89,7 +90,7 @@ async def get_prompt_template(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Prompt template with ID {prompt_id} not found"
         )
-    return prompt
+    return transform_object_id(prompt)
 
 @router.put("/prompts/{prompt_id}", response_model=PromptTemplateOut)
 async def update_prompt_template(
@@ -136,7 +137,7 @@ async def update_prompt_template(
     
     # Return the updated prompt
     updated_prompt = prompts_collection.find_one({"_id": prompt_oid})
-    return updated_prompt
+    return transform_object_id(updated_prompt)
 
 @router.delete("/prompts/{prompt_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_prompt_template(
@@ -196,4 +197,4 @@ async def set_default_prompt_template(
     
     # Return the updated prompt
     updated_prompt = prompts_collection.find_one({"_id": prompt_oid})
-    return updated_prompt
+    return transform_object_id(updated_prompt)

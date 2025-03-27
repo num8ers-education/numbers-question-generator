@@ -22,19 +22,20 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class UserInDB(UserBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     hashed_password: str
     is_active: bool = True
     created_at: datetime
     updated_at: Optional[datetime] = None
 
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
+
 class UserOut(UserBase):
     id: str
     is_active: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    updated_at: Optional[datetime] = None
 
 class UserLogin(BaseModel):
     email: EmailStr

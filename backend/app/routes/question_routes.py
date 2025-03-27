@@ -12,6 +12,7 @@ from app.models.question import (
 )
 from app.models.user import TokenData
 from app.services.ai_service import AIService
+from app.utils.db_utils import transform_object_id
 
 router = APIRouter(tags=["Questions"])
 
@@ -50,7 +51,7 @@ async def create_question(question: QuestionCreate, token_data: TokenData = Depe
     result = questions_collection.insert_one(question_data)
     created_question = questions_collection.find_one({"_id": result.inserted_id})
     
-    return created_question
+    return transform_object_id(created_question)
 
 @router.get("/questions", response_model=List[QuestionOut])
 async def get_all_questions(
@@ -78,7 +79,7 @@ async def get_all_questions(
         query["ai_generated"] = ai_generated
     
     questions = questions_collection.find(query).skip(skip).limit(limit)
-    return list(questions)
+    return [transform_object_id(question) for question in questions]
 
 @router.get("/questions/{question_id}", response_model=QuestionOut)
 async def get_question(
@@ -92,7 +93,7 @@ async def get_question(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Question with ID {question_id} not found"
         )
-    return question
+    return transform_object_id(question)
 
 @router.put("/questions/{question_id}", response_model=QuestionOut)
 async def update_question(
@@ -133,7 +134,7 @@ async def update_question(
     
     # Return the updated question
     updated_question = questions_collection.find_one({"_id": question_oid})
-    return updated_question
+    return transform_object_id(updated_question)
 
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_question(
@@ -188,7 +189,7 @@ async def generate_questions(
             saved_question = questions_collection.find_one({"_id": result.inserted_id})
             saved_questions.append(saved_question)
         
-        return saved_questions
+        return [transform_object_id(question) for question in saved_questions]
         
     except ValueError as e:
         # Handle validation errors
@@ -223,7 +224,7 @@ async def regenerate_question(
         
         # Return the updated question
         updated_question = questions_collection.find_one({"_id": question_oid})
-        return updated_question
+        return transform_object_id(updated_question)
         
     except ValueError as e:
         # Handle validation errors

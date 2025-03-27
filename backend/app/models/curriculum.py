@@ -1,7 +1,7 @@
 # backend/app/models/curriculum.py - Adding slug fields to models
 
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 
 # Curriculum
@@ -19,10 +19,13 @@ class CurriculumUpdate(BaseModel):
     slug: Optional[str] = None  # Added slug field
 
 class CurriculumInDB(CurriculumBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class CurriculumOut(CurriculumBase):
     id: str
@@ -47,10 +50,13 @@ class SubjectUpdate(BaseModel):
     slug: Optional[str] = None  # Added slug field
 
 class SubjectInDB(SubjectBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class SubjectOut(SubjectBase):
     id: str
@@ -75,10 +81,13 @@ class CourseUpdate(BaseModel):
     slug: Optional[str] = None  # Added slug field
 
 class CourseInDB(CourseBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class CourseOut(CourseBase):
     id: str
@@ -103,10 +112,13 @@ class UnitUpdate(BaseModel):
     slug: Optional[str] = None  # Added slug field
 
 class UnitInDB(UnitBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class UnitOut(UnitBase):
     id: str
@@ -131,10 +143,13 @@ class TopicUpdate(BaseModel):
     slug: Optional[str] = None  # Added slug field
 
 class TopicInDB(TopicBase):
-    id: str = Field(..., alias="_id")
+    id: str = Field(alias="_id")
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+    class Config:
+        populate_by_name = True  # For compatibility with Pydantic v2
 
 class TopicOut(TopicBase):
     id: str

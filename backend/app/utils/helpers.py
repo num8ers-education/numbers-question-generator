@@ -1,27 +1,105 @@
-# backend/app/utils/helpers.py - Add slug generation utilities
-
+# backend/app/utils/helpers.py
 import re
-import hashlib
+import unicodedata
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 import json
-from slugify import slugify as python_slugify
+import hashlib
 import uuid
 
-def convert_object_id_to_str(obj: Any) -> Any:
+def slugify(text: str) -> str:
     """
-    Recursively convert ObjectId types in a dictionary to strings
+    Create a URL-friendly slug from a string:
+    - Convert to lowercase
+    - Remove non-word chars
+    - Replace spaces with hyphens
     """
-    if isinstance(obj, dict):
-        return {k: convert_object_id_to_str(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_object_id_to_str(item) for item in obj]
-    elif str(type(obj)) == "<class 'bson.objectid.ObjectId'>":
-        return str(obj)
-    elif isinstance(obj, datetime):
-        return obj.isoformat()
-    else:
-        return obj
+    if not text:
+        return ""
+    
+    # Normalize unicode characters
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove invalid chars
+    text = re.sub(r'[^\w\s-]', '', text)
+    
+    # Replace spaces with hyphens
+    text = re.sub(r'[-\s]+', '-', text).strip('-_')
+    
+    return text
+
+def generate_slug(name: str, add_random: bool = True) -> str:
+    """
+    Generate a URL-friendly slug from a name
+    
+    Args:
+        name: The string to convert to a slug
+        add_random: Whether to add a random suffix for uniqueness
+        
+    Returns:
+        A URL-friendly slug
+    """
+    # Generate base slug
+    base_slug = slugify(name)
+    
+    # Add a short random suffix if requested
+    if add_random:
+        # Generate a short unique ID (first 8 chars of a UUID)
+        short_id = str(uuid.uuid4())[:8]
+        return f"{base_slug}-{short_id}"
+    
+    return base_slug
+
+def check_slug_exists(collection, slug: str) -> bool:
+    """
+    Check if a slug already exists in a collection
+    
+    Args:
+        collection: MongoDB collection to check
+        slug: The slug to check
+        
+    Returns:
+        True if slug exists, False otherwise
+    """
+    return collection.find_one({"slug": slug}) is not None
+
+def create_unique_slug(collection, name: str) -> str:
+    """
+    Create a unique slug for a collection
+    
+    Args:
+        collection: MongoDB collection to check for uniqueness
+        name: The name to create a slug from
+        
+    Returns:
+        A unique slug for the collection
+    """
+    # First try without random suffix
+    base_slug = generate_slug(name, add_random=False)
+    
+    # Check if it exists
+    if not check_slug_exists(collection, base_slug):
+        return base_slug
+    
+    # If it exists, add a random suffix
+    unique_slug = generate_slug(name, add_random=True)
+    
+    # In the rare case that even this exists, keep trying with new UUIDs
+    attempt = 1
+    max_attempts = 5
+    while check_slug_exists(collection, unique_slug) and attempt < max_attempts:
+        unique_slug = generate_slug(name, add_random=True)
+        attempt += 1
+    
+    # If we still couldn't find a unique slug, append a timestamp
+    if attempt >= max_attempts:
+        timestamp = int(datetime.now().timestamp())
+        unique_slug = f"{base_slug}-{timestamp}"
+    
+    return unique_slug
 
 def sanitize_string(text: str) -> str:
     """
@@ -115,73 +193,3 @@ def validate_correct_answer(correct_answer: Union[str, List[str]], question_type
     
     # For Fill-in-the-blank, we just need a non-empty string
     return len(correct_answer) > 0
-
-def slugify(text: str) -> str:
-    """Wrapper around python-slugify to handle None values"""
-    if not text:
-        return ""
-    return python_slugify(text)
-
-def generate_slug(name: str, add_random: bool = True) -> str:
-    """
-    Generate a URL-friendly slug from a name
-    
-    Args:
-        name: The string to convert to a slug
-        add_random: Whether to add a random suffix for uniqueness
-        
-    Returns:
-        A URL-friendly slug
-    """
-    # Generate base slug
-    base_slug = slugify(name)
-    
-    # Add a short random suffix if requested
-    if add_random:
-        # Generate a short unique ID (first 8 chars of a UUID)
-        short_id = str(uuid.uuid4())[:8]
-        return f"{base_slug}-{short_id}"
-    
-    return base_slug
-
-def check_slug_exists(collection, slug: str) -> bool:
-    """
-    Check if a slug already exists in a collection
-    
-    Args:
-        collection: MongoDB collection to check
-        slug: The slug to check
-        
-    Returns:
-        True if slug exists, False otherwise
-    """
-    return collection.find_one({"slug": slug}) is not None
-
-def create_unique_slug(collection, name: str) -> str:
-    """
-    Create a unique slug for a collection
-    
-    Args:
-        collection: MongoDB collection to check for uniqueness
-        name: The name to create a slug from
-        
-    Returns:
-        A unique slug for the collection
-    """
-    # First try without random suffix
-    base_slug = generate_slug(name, add_random=False)
-    
-    # Check if it exists
-    if not check_slug_exists(collection, base_slug):
-        return base_slug
-    
-    # If it exists, add a random suffix
-    unique_slug = generate_slug(name, add_random=True)
-    
-    # In the rare case that even this exists, keep trying with new UUIDs
-    attempt = 1
-    while check_slug_exists(collection, unique_slug) and attempt < 5:
-        unique_slug = generate_slug(name, add_random=True)
-        attempt += 1
-    
-    return unique_slug

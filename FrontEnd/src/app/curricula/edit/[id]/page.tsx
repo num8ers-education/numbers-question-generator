@@ -1,11 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Layout from '@/app/layout/Layout';
-import EditCurriculumModal from '../../EditCurriculumModal';
-import { curriculumAPI } from '@/services/api';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Layout from "@/app/layout/Layout";
+import EditCurriculumModal from "../../EditCurriculumModal";
+import toast from "react-hot-toast";
 
 export default function EditCurriculumPage() {
   const params = useParams();
@@ -15,16 +14,16 @@ export default function EditCurriculumPage() {
 
   const handleClose = () => {
     setIsModalOpen(false);
-    router.push('/curricula');
+    router.push("/curricula");
   };
 
   const handleSuccess = () => {
-    toast.success('Curriculum updated successfully!');
-    router.push('/curricula');
+    toast.success("Curriculum updated successfully!");
+    router.push("/curricula");
   };
 
   return (
-    <Layout allowedRoles={['admin', 'teacher']}>
+    <Layout allowedRoles={["admin", "teacher"]}>
       <EditCurriculumModal
         isOpen={isModalOpen}
         onClose={handleClose}

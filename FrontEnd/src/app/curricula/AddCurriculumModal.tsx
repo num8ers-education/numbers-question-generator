@@ -49,81 +49,81 @@ export default function AddCurriculumModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!curriculumName.trim()) {
       setError("Curriculum name is required");
       return;
     }
-  
+
     try {
       setIsLoading(true);
       setError("");
-  
+
       // Prepare data for API
       const description =
         curriculumDescription.trim() ||
         `${curriculumName} curriculum for generating exam questions.`;
-  
+
       const data = {
         name: curriculumName,
         description: description,
       };
-  
+
       // Create the curriculum first
       const curriculumResponse = await curriculumAPI.createCurriculum(data);
       const curriculumId = curriculumResponse.id;
       console.log("Curriculum created:", curriculumResponse);
-  
+
       // Now create the hierarchy (subjects -> courses -> units -> topics)
       for (const subject of subjects) {
         if (!subject.name.trim()) continue; // Skip empty subjects
-        
+
         // Create subject
         const subjectData = {
           name: subject.name,
-          curriculum_id: curriculumId
+          curriculum_id: curriculumId,
         };
         const subjectResponse = await curriculumAPI.createSubject(subjectData);
         const subjectId = subjectResponse.id;
         console.log(`Subject "${subject.name}" created:`, subjectResponse);
-        
+
         // Create courses for this subject
         for (const course of subject.courses) {
           if (!course.name.trim()) continue; // Skip empty courses
-          
+
           // Create course
           const courseData = {
             name: course.name,
-            subject_id: subjectId
+            subject_id: subjectId,
           };
           const courseResponse = await curriculumAPI.createCourse(courseData);
           const courseId = courseResponse.id;
           console.log(`Course "${course.name}" created:`, courseResponse);
-          
+
           // Create units and topics for this course
           // Note: The UI has topics containing units, but the API expects units containing topics
           // We need to adapt the data structure here
-          
+
           for (const topic of course.topics) {
             if (!topic.name.trim()) continue; // Skip empty topics
-            
+
             // First, create a unit for this "topic" from the UI
             const unitData = {
               name: topic.name, // Use the topic name from UI as unit name for API
-              course_id: courseId
+              course_id: courseId,
             };
             const unitResponse = await curriculumAPI.createUnit(unitData);
             const unitId = unitResponse.id;
             console.log(`Unit "${topic.name}" created:`, unitResponse);
-            
+
             // Then create topics (which are "units" in the UI) for this unit
             for (const unit of topic.units) {
               if (!unit.name.trim()) continue; // Skip empty units
-              
+
               // Create topic
               const topicData = {
                 name: unit.name, // Use the unit name from UI as topic name for API
-                unit_id: unitId
+                unit_id: unitId,
               };
               const topicResponse = await curriculumAPI.createTopic(topicData);
               console.log(`Topic "${unit.name}" created:`, topicResponse);
@@ -131,15 +131,15 @@ export default function AddCurriculumModal({
           }
         }
       }
-  
+
       console.log("Curriculum hierarchy created successfully!");
       toast.success("Curriculum created successfully!");
-  
+
       // Call the success callback if provided
       if (onSuccess) {
         onSuccess(curriculumResponse);
       }
-  
+
       // Reset form and close modal
       setCurriculumName("");
       setCurriculumDescription("");
@@ -603,19 +603,6 @@ export default function AddCurriculumModal({
                   </div>
                 </div>
               ))}
-
-              <div className="text-gray-500 text-sm mt-8 bg-gray-50 p-4 rounded-md border border-gray-200">
-                <p className="mb-2 font-medium">Note:</p>
-                <p>
-                  Currently, only the curriculum name and description will be
-                  saved. The subject hierarchy will be implemented in a future
-                  update.
-                </p>
-                <p className="mt-2">
-                  Once the curriculum is created, you can add subjects, courses,
-                  topics, and units using the curriculum management interface.
-                </p>
-              </div>
             </div>
           </form>
         </div>

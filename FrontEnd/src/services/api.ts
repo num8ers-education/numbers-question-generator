@@ -6,6 +6,34 @@ interface CurriculumFormData {
   description: string;
 }
 
+interface SubjectFormData {
+  name: string;
+  description?: string;
+  curriculum_id: string;
+  slug?: string;
+}
+
+interface CourseFormData {
+  name: string;
+  description?: string;
+  subject_id: string;
+  slug?: string;
+}
+
+interface UnitFormData {
+  name: string;
+  description?: string;
+  course_id: string;
+  slug?: string;
+}
+
+interface TopicFormData {
+  name: string;
+  description?: string;
+  unit_id: string;
+  slug?: string;
+}
+
 // Base API configuration
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -235,6 +263,212 @@ export const curriculumAPI = {
   createTopic: async (data: any) => {
     try {
       const response = await apiClient.post("/topics", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+// Subject API calls
+export const subjectAPI = {
+  getAllSubjects: async (curriculumId?: string) => {
+    try {
+      const url = curriculumId
+        ? `/subjects?curriculum_id=${curriculumId}`
+        : "/subjects";
+      const response = await apiClient.get(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getSubject: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/subjects/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getSubjectWithHierarchy: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/subjects/${idOrSlug}/full`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  createSubject: async (data: SubjectFormData) => {
+    try {
+      const response = await apiClient.post("/subjects", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateSubject: async (idOrSlug: string, data: Partial<SubjectFormData>) => {
+    try {
+      const response = await apiClient.put(`/subjects/${idOrSlug}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteSubject: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.delete(`/subjects/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+// Course API calls
+export const courseAPI = {
+  getAllCourses: async (subjectId?: string) => {
+    try {
+      const url = subjectId ? `/courses?subject_id=${subjectId}` : "/courses";
+      const response = await apiClient.get(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getCourse: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/courses/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getCourseWithHierarchy: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/courses/${idOrSlug}/full`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  createCourse: async (data: CourseFormData) => {
+    try {
+      const response = await apiClient.post("/courses", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateCourse: async (idOrSlug: string, data: Partial<CourseFormData>) => {
+    try {
+      const response = await apiClient.put(`/courses/${idOrSlug}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteCourse: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.delete(`/courses/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+// Unit API calls
+export const unitAPI = {
+  getAllUnits: async (courseId?: string) => {
+    try {
+      const url = courseId ? `/units?course_id=${courseId}` : "/units";
+      const response = await apiClient.get(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getUnit: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/units/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getUnitWithTopics: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/units/${idOrSlug}/topics`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  createUnit: async (data: UnitFormData) => {
+    try {
+      const response = await apiClient.post("/units", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUnit: async (idOrSlug: string, data: Partial<UnitFormData>) => {
+    try {
+      const response = await apiClient.put(`/units/${idOrSlug}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteUnit: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.delete(`/units/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+// Topic API calls
+export const topicAPI = {
+  getAllTopics: async (unitId?: string) => {
+    try {
+      const url = unitId ? `/topics?unit_id=${unitId}` : "/topics";
+      const response = await apiClient.get(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getTopic: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.get(`/topics/${idOrSlug}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  createTopic: async (data: TopicFormData) => {
+    try {
+      const response = await apiClient.post("/topics", data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateTopic: async (idOrSlug: string, data: Partial<TopicFormData>) => {
+    try {
+      const response = await apiClient.put(`/topics/${idOrSlug}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteTopic: async (idOrSlug: string) => {
+    try {
+      const response = await apiClient.delete(`/topics/${idOrSlug}`);
       return response.data;
     } catch (error) {
       throw error;

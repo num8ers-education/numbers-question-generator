@@ -1,5 +1,5 @@
 // src/services/api.ts
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from "axios";
 
 interface CurriculumFormData {
   name: string;
@@ -7,20 +7,21 @@ interface CurriculumFormData {
 }
 
 // Base API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Request interceptor for adding the auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -33,15 +34,15 @@ apiClient.interceptors.request.use(
 export const authAPI = {
   login: async (email: string, password: string) => {
     try {
-      const response = await apiClient.post('/login', { email, password });
+      const response = await apiClient.post("/login", { email, password });
       return response.data;
     } catch (error) {
       throw error;
     }
   },
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   },
 };
 
@@ -49,7 +50,7 @@ export const authAPI = {
 export const userAPI = {
   getAllUsers: async () => {
     try {
-      const response = await apiClient.get('/users');
+      const response = await apiClient.get("/users");
       return response.data;
     } catch (error) {
       throw error;
@@ -65,7 +66,7 @@ export const userAPI = {
   },
   createUser: async (userData: any) => {
     try {
-      const response = await apiClient.post('/users', userData);
+      const response = await apiClient.post("/users", userData);
       return response.data;
     } catch (error) {
       throw error;
@@ -93,7 +94,7 @@ export const userAPI = {
 export const curriculumAPI = {
   getAllCurricula: async () => {
     try {
-      const response = await apiClient.get('/curriculum');
+      const response = await apiClient.get("/curriculum");
       return response.data;
     } catch (error) {
       throw error;
@@ -117,7 +118,9 @@ export const curriculumAPI = {
   },
   getSubjects: async (curriculumId?: string) => {
     try {
-      const url = curriculumId ? `/subjects?curriculum_id=${curriculumId}` : '/subjects';
+      const url = curriculumId
+        ? `/subjects?curriculum_id=${curriculumId}`
+        : "/subjects";
       const response = await apiClient.get(url);
       return response.data;
     } catch (error) {
@@ -126,7 +129,7 @@ export const curriculumAPI = {
   },
   getCourses: async (subjectId?: string) => {
     try {
-      const url = subjectId ? `/courses?subject_id=${subjectId}` : '/courses';
+      const url = subjectId ? `/courses?subject_id=${subjectId}` : "/courses";
       const response = await apiClient.get(url);
       return response.data;
     } catch (error) {
@@ -135,7 +138,7 @@ export const curriculumAPI = {
   },
   getUnits: async (courseId?: string) => {
     try {
-      const url = courseId ? `/units?course_id=${courseId}` : '/units';
+      const url = courseId ? `/units?course_id=${courseId}` : "/units";
       const response = await apiClient.get(url);
       return response.data;
     } catch (error) {
@@ -144,15 +147,17 @@ export const curriculumAPI = {
   },
   getTopics: async (unitId?: string) => {
     try {
-      const url = unitId ? `/topics?unit_id=${unitId}` : '/topics';
+      const url = unitId ? `/topics?unit_id=${unitId}` : "/topics";
       const response = await apiClient.get(url);
       return response.data;
     } catch (error) {
       throw error;
     }
   },
-  createCurriculum: async (data: CurriculumFormData): Promise<AxiosResponse> => {
-    const response = await apiClient.post('/api/curricula', data);
+  createCurriculum: async (
+    data: CurriculumFormData
+  ): Promise<AxiosResponse> => {
+    const response = await apiClient.post("/api/curricula", data);
     return response.data;
   },
 };
@@ -167,7 +172,9 @@ export const questionAPI = {
           if (value) params.append(key, value as string);
         });
       }
-      const url = `/questions${params.toString() ? `?${params.toString()}` : ''}`;
+      const url = `/questions${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
       const response = await apiClient.get(url);
       return response.data;
     } catch (error) {
@@ -184,7 +191,7 @@ export const questionAPI = {
   },
   createQuestion: async (questionData: any) => {
     try {
-      const response = await apiClient.post('/questions', questionData);
+      const response = await apiClient.post("/questions", questionData);
       return response.data;
     } catch (error) {
       throw error;
@@ -208,7 +215,10 @@ export const questionAPI = {
   },
   generateQuestions: async (generationData: any) => {
     try {
-      const response = await apiClient.post('/questions/ai/generate', generationData);
+      const response = await apiClient.post(
+        "/questions/ai/generate",
+        generationData
+      );
       return response.data;
     } catch (error) {
       throw error;
@@ -216,9 +226,9 @@ export const questionAPI = {
   },
   regenerateQuestion: async (questionId: string, customPrompt?: string) => {
     try {
-      const response = await apiClient.post('/questions/ai/regenerate', {
+      const response = await apiClient.post("/questions/ai/regenerate", {
         question_id: questionId,
-        with_custom_prompt: customPrompt
+        with_custom_prompt: customPrompt,
       });
       return response.data;
     } catch (error) {
@@ -235,7 +245,7 @@ export const dashboardAPI = {
       // For now, we'll simulate it by combining data from various endpoints
       const users = await userAPI.getAllUsers();
       const curricula = await curriculumAPI.getAllCurricula();
-      
+
       return {
         users,
         curricula,
@@ -243,7 +253,7 @@ export const dashboardAPI = {
           total_users: users.length,
           total_curricula: curricula.length,
           // Add any other stats you need
-        }
+        },
       };
     } catch (error) {
       throw error;
@@ -251,7 +261,7 @@ export const dashboardAPI = {
   },
   getTeacherDashboard: async () => {
     try {
-      const response = await apiClient.get('/teacher/dashboard');
+      const response = await apiClient.get("/teacher/dashboard");
       return response.data;
     } catch (error) {
       throw error;
@@ -259,7 +269,7 @@ export const dashboardAPI = {
   },
   getStudentDashboard: async () => {
     try {
-      const response = await apiClient.get('/student/dashboard');
+      const response = await apiClient.get("/student/dashboard");
       return response.data;
     } catch (error) {
       throw error;
@@ -271,7 +281,7 @@ export const dashboardAPI = {
 export const promptAPI = {
   getAllPrompts: async () => {
     try {
-      const response = await apiClient.get('/prompts');
+      const response = await apiClient.get("/prompts");
       return response.data;
     } catch (error) {
       throw error;
@@ -279,7 +289,7 @@ export const promptAPI = {
   },
   getDefaultPrompt: async () => {
     try {
-      const response = await apiClient.get('/prompts/default');
+      const response = await apiClient.get("/prompts/default");
       return response.data;
     } catch (error) {
       throw error;
@@ -287,7 +297,7 @@ export const promptAPI = {
   },
   createPrompt: async (promptData: any) => {
     try {
-      const response = await apiClient.post('/prompts', promptData);
+      const response = await apiClient.post("/prompts", promptData);
       return response.data;
     } catch (error) {
       throw error;

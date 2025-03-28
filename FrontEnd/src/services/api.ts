@@ -1,6 +1,10 @@
 // src/services/api.ts
+
 import axios, { AxiosResponse } from "axios";
 
+// ---------------------
+// Type definitions
+// ---------------------
 interface CurriculumFormData {
   name: string;
   description: string;
@@ -34,7 +38,9 @@ interface TopicFormData {
   slug?: string;
 }
 
+// ---------------------
 // Base API configuration
+// ---------------------
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -72,7 +78,9 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Authentication API calls
+// ---------------------
+// AUTHENTICATION
+// ---------------------
 export const authAPI = {
   login: async (email: string, password: string) => {
     try {
@@ -97,6 +105,7 @@ export const authAPI = {
       throw error;
     }
   },
+
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -104,7 +113,9 @@ export const authAPI = {
   },
 };
 
-// User management API calls
+// ---------------------
+// USER MANAGEMENT
+// ---------------------
 export const userAPI = {
   getAllUsers: async () => {
     try {
@@ -148,343 +159,254 @@ export const userAPI = {
   },
 };
 
-// Curriculum API calls
+// ---------------------
+// CURRICULUM API
+// (with added update/delete methods for Subjects, Courses, etc.)
+// ---------------------
 export const curriculumAPI = {
+  // --- Curricula ---
   getAllCurricula: async () => {
-    try {
-      const response = await apiClient.get("/curriculum");
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get("/curriculum");
+    return response.data;
   },
   getCurriculum: async (id: string) => {
-    try {
-      const response = await apiClient.get(`/curriculum/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/curriculum/${id}`);
+    return response.data;
   },
   getCurriculumWithHierarchy: async (id: string) => {
-    try {
-      const response = await apiClient.get(`/curriculum/${id}/full`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  getSubjects: async (curriculumId?: string) => {
-    try {
-      const url = curriculumId
-        ? `/subjects?curriculum_id=${curriculumId}`
-        : "/subjects";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  getCourses: async (subjectId?: string) => {
-    try {
-      const url = subjectId ? `/courses?subject_id=${subjectId}` : "/courses";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  getUnits: async (courseId?: string) => {
-    try {
-      const url = courseId ? `/units?course_id=${courseId}` : "/units";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  getTopics: async (unitId?: string) => {
-    try {
-      const url = unitId ? `/topics?unit_id=${unitId}` : "/topics";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/curriculum/${id}/full`);
+    return response.data;
   },
   createCurriculum: async (data: CurriculumFormData) => {
-    try {
-      const response = await apiClient.post("/curriculum", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/curriculum", data);
+    return response.data;
   },
   updateCurriculum: async (id: string, data: CurriculumFormData) => {
-    try {
-      const response = await apiClient.put(`/curriculum/${id}`, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.put(`/curriculum/${id}`, data);
+    return response.data;
   },
   deleteCurriculum: async (id: string) => {
-    try {
-      const response = await apiClient.delete(`/curriculum/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.delete(`/curriculum/${id}`);
+    return response.data;
+  },
+
+  // --- Subjects ---
+  getSubjects: async (curriculumId?: string) => {
+    const url = curriculumId
+      ? `/subjects?curriculum_id=${curriculumId}`
+      : "/subjects";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   createSubject: async (data: any) => {
-    try {
-      const response = await apiClient.post("/subjects", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/subjects", data);
+    return response.data;
+  },
+  updateSubject: async (subjectId: string, data: any) => {
+    const response = await apiClient.put(`/subjects/${subjectId}`, data);
+    return response.data;
+  },
+  deleteSubject: async (subjectId: string) => {
+    const response = await apiClient.delete(`/subjects/${subjectId}`);
+    return response.data;
+  },
+
+  // --- Courses ---
+  getCourses: async (subjectId?: string) => {
+    const url = subjectId ? `/courses?subject_id=${subjectId}` : "/courses";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   createCourse: async (data: any) => {
-    try {
-      const response = await apiClient.post("/courses", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/courses", data);
+    return response.data;
+  },
+  updateCourse: async (courseId: string, data: any) => {
+    const response = await apiClient.put(`/courses/${courseId}`, data);
+    return response.data;
+  },
+  deleteCourse: async (courseId: string) => {
+    const response = await apiClient.delete(`/courses/${courseId}`);
+    return response.data;
+  },
+
+  // --- Units (called "topics" in your UI) ---
+  getUnits: async (courseId?: string) => {
+    const url = courseId ? `/units?course_id=${courseId}` : "/units";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   createUnit: async (data: any) => {
-    try {
-      const response = await apiClient.post("/units", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/units", data);
+    return response.data;
+  },
+  updateUnit: async (unitId: string, data: any) => {
+    const response = await apiClient.put(`/units/${unitId}`, data);
+    return response.data;
+  },
+  deleteUnit: async (unitId: string) => {
+    const response = await apiClient.delete(`/units/${unitId}`);
+    return response.data;
+  },
+
+  // --- Topics (called "units" in your UI) ---
+  getTopics: async (unitId?: string) => {
+    const url = unitId ? `/topics?unit_id=${unitId}` : "/topics";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   createTopic: async (data: any) => {
-    try {
-      const response = await apiClient.post("/topics", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/topics", data);
+    return response.data;
+  },
+  updateTopic: async (topicId: string, data: any) => {
+    const response = await apiClient.put(`/topics/${topicId}`, data);
+    return response.data;
+  },
+  deleteTopic: async (topicId: string) => {
+    const response = await apiClient.delete(`/topics/${topicId}`);
+    return response.data;
   },
 };
 
-// Subject API calls
+// ---------------------
+// SUBJECT API
+// (Optional if you prefer using subjectAPI for other pages)
+// ---------------------
 export const subjectAPI = {
   getAllSubjects: async (curriculumId?: string) => {
-    try {
-      const url = curriculumId
-        ? `/subjects?curriculum_id=${curriculumId}`
-        : "/subjects";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const url = curriculumId
+      ? `/subjects?curriculum_id=${curriculumId}`
+      : "/subjects";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   getSubject: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/subjects/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/subjects/${idOrSlug}`);
+    return response.data;
   },
   getSubjectWithHierarchy: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/subjects/${idOrSlug}/full`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/subjects/${idOrSlug}/full`);
+    return response.data;
   },
   createSubject: async (data: SubjectFormData) => {
-    try {
-      const response = await apiClient.post("/subjects", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/subjects", data);
+    return response.data;
   },
   updateSubject: async (idOrSlug: string, data: Partial<SubjectFormData>) => {
-    try {
-      const response = await apiClient.put(`/subjects/${idOrSlug}`, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.put(`/subjects/${idOrSlug}`, data);
+    return response.data;
   },
   deleteSubject: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.delete(`/subjects/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.delete(`/subjects/${idOrSlug}`);
+    return response.data;
   },
 };
 
-// Course API calls
+// ---------------------
+// COURSE API
+// (Optional if you prefer using courseAPI for other pages)
+// ---------------------
 export const courseAPI = {
   getAllCourses: async (subjectId?: string) => {
-    try {
-      const url = subjectId ? `/courses?subject_id=${subjectId}` : "/courses";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const url = subjectId ? `/courses?subject_id=${subjectId}` : "/courses";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   getCourse: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/courses/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/courses/${idOrSlug}`);
+    return response.data;
   },
   getCourseWithHierarchy: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/courses/${idOrSlug}/full`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/courses/${idOrSlug}/full`);
+    return response.data;
   },
   createCourse: async (data: CourseFormData) => {
-    try {
-      const response = await apiClient.post("/courses", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/courses", data);
+    return response.data;
   },
   updateCourse: async (idOrSlug: string, data: Partial<CourseFormData>) => {
-    try {
-      const response = await apiClient.put(`/courses/${idOrSlug}`, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.put(`/courses/${idOrSlug}`, data);
+    return response.data;
   },
   deleteCourse: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.delete(`/courses/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.delete(`/courses/${idOrSlug}`);
+    return response.data;
   },
 };
 
-// Unit API calls
+// ---------------------
+// UNIT API
+// (Optional if you prefer using unitAPI for other pages)
+// ---------------------
 export const unitAPI = {
   getAllUnits: async (courseId?: string) => {
-    try {
-      const url = courseId ? `/units?course_id=${courseId}` : "/units";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const url = courseId ? `/units?course_id=${courseId}` : "/units";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   getUnit: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/units/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/units/${idOrSlug}`);
+    return response.data;
   },
   getUnitWithTopics: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/units/${idOrSlug}/topics`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/units/${idOrSlug}/topics`);
+    return response.data;
   },
   createUnit: async (data: UnitFormData) => {
-    try {
-      const response = await apiClient.post("/units", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/units", data);
+    return response.data;
   },
   updateUnit: async (idOrSlug: string, data: Partial<UnitFormData>) => {
-    try {
-      const response = await apiClient.put(`/units/${idOrSlug}`, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.put(`/units/${idOrSlug}`, data);
+    return response.data;
   },
   deleteUnit: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.delete(`/units/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.delete(`/units/${idOrSlug}`);
+    return response.data;
   },
 };
 
-// Topic API calls
+// ---------------------
+// TOPIC API
+// (Optional if you prefer using topicAPI for other pages)
+// ---------------------
 export const topicAPI = {
   getAllTopics: async (unitId?: string) => {
-    try {
-      const url = unitId ? `/topics?unit_id=${unitId}` : "/topics";
-      const response = await apiClient.get(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const url = unitId ? `/topics?unit_id=${unitId}` : "/topics";
+    const response = await apiClient.get(url);
+    return response.data;
   },
   getTopic: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.get(`/topics/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.get(`/topics/${idOrSlug}`);
+    return response.data;
   },
   createTopic: async (data: TopicFormData) => {
-    try {
-      const response = await apiClient.post("/topics", data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.post("/topics", data);
+    return response.data;
   },
   updateTopic: async (idOrSlug: string, data: Partial<TopicFormData>) => {
-    try {
-      const response = await apiClient.put(`/topics/${idOrSlug}`, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.put(`/topics/${idOrSlug}`, data);
+    return response.data;
   },
   deleteTopic: async (idOrSlug: string) => {
-    try {
-      const response = await apiClient.delete(`/topics/${idOrSlug}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await apiClient.delete(`/topics/${idOrSlug}`);
+    return response.data;
   },
 };
 
-// Question API calls
+// ---------------------
+// QUESTION API
+// ---------------------
 export const questionAPI = {
   getAllQuestions: async (filters?: any) => {
     try {
       const params = new URLSearchParams();
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== "")
+          if (value !== undefined && value !== "") {
             params.append(key, value.toString());
+          }
         });
       }
       const url = `/questions${
@@ -496,6 +418,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   getQuestion: async (id: string) => {
     try {
       const response = await apiClient.get(`/questions/${id}`);
@@ -504,6 +427,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   createQuestion: async (questionData: any) => {
     try {
       const response = await apiClient.post("/questions", questionData);
@@ -512,6 +436,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   updateQuestion: async (id: string, questionData: any) => {
     try {
       const response = await apiClient.put(`/questions/${id}`, questionData);
@@ -520,6 +445,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   deleteQuestion: async (id: string) => {
     try {
       const response = await apiClient.delete(`/questions/${id}`);
@@ -528,6 +454,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   generateQuestions: async (generationData: any) => {
     try {
       const response = await apiClient.post(
@@ -539,6 +466,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   regenerateQuestion: async (questionId: string, customPrompt?: string) => {
     try {
       const response = await apiClient.post("/questions/ai/regenerate", {
@@ -550,6 +478,7 @@ export const questionAPI = {
       throw error;
     }
   },
+
   batchDeleteQuestions: async (questionIds: string[]) => {
     try {
       const response = await apiClient.post("/questions/batch/delete", {
@@ -562,11 +491,13 @@ export const questionAPI = {
   },
 };
 
-// Dashboard API calls
+// ---------------------
+// DASHBOARD API
+// ---------------------
 export const dashboardAPI = {
   getAdminDashboard: async () => {
     try {
-      // Combining data from multiple endpoints since there's no dedicated admin dashboard endpoint
+      // Combining data from multiple endpoints
       const [users, curricula, questions] = await Promise.all([
         userAPI.getAllUsers(),
         curriculumAPI.getAllCurricula(),
@@ -588,6 +519,7 @@ export const dashboardAPI = {
       throw error;
     }
   },
+
   getTeacherDashboard: async () => {
     try {
       const response = await apiClient.get("/teacher/dashboard");
@@ -613,6 +545,7 @@ export const dashboardAPI = {
       }
     }
   },
+
   getStudentDashboard: async () => {
     try {
       const response = await apiClient.get("/student/dashboard");
@@ -621,7 +554,6 @@ export const dashboardAPI = {
       // Fallback if endpoint doesn't exist
       try {
         const questions = await questionAPI.getAllQuestions();
-
         return {
           stats: {
             questions_viewed: Math.floor(Math.random() * 100) + 50,
@@ -640,6 +572,7 @@ export const dashboardAPI = {
       }
     }
   },
+
   getTeacherActivity: async (days = 30) => {
     try {
       const response = await apiClient.get(`/teacher/activity?days=${days}`);
@@ -650,7 +583,9 @@ export const dashboardAPI = {
   },
 };
 
-// Prompt template API calls
+// ---------------------
+// PROMPT TEMPLATE API
+// ---------------------
 export const promptAPI = {
   getAllPrompts: async () => {
     try {
@@ -686,4 +621,5 @@ export const promptAPI = {
   },
 };
 
+// Export default
 export default apiClient;

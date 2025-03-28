@@ -13,7 +13,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { curriculumAPI } from "@/services/api";
+import { curriculumAPI } from "@/services/api"; // <-- Make sure this is the file you updated!
 import toast from "react-hot-toast";
 
 interface EditCurriculumModalProps {
@@ -58,6 +58,18 @@ export default function EditCurriculumModal({
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState("");
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [originalSubjects, setOriginalSubjects] = useState<Subject[]>([]);
+  const [itemsToDelete, setItemsToDelete] = useState<{
+    subjects: string[];
+    courses: string[];
+    units: string[];
+    topics: string[];
+  }>({
+    subjects: [],
+    courses: [],
+    units: [],
+    topics: [],
+  });
 
   // Fetch existing curriculum data
   useEffect(() => {
@@ -114,6 +126,8 @@ export default function EditCurriculumModal({
           );
 
           setSubjects(formattedSubjects);
+          // Keep a copy of the original data for comparison
+          setOriginalSubjects(JSON.parse(JSON.stringify(formattedSubjects)));
         } else {
           // Add a default empty subject if none exist
           setSubjects([
@@ -135,6 +149,7 @@ export default function EditCurriculumModal({
               ],
             },
           ]);
+          setOriginalSubjects([]);
         }
       } catch (err) {
         console.error("Error fetching curriculum:", err);
@@ -160,6 +175,7 @@ export default function EditCurriculumModal({
             ],
           },
         ]);
+        setOriginalSubjects([]);
       } finally {
         setIsFetching(false);
       }
@@ -199,96 +215,11 @@ export default function EditCurriculumModal({
       );
       console.log("Curriculum updated:", curriculumResponse);
 
-      // Now update the hierarchy
-      // First, identify which subjects/courses/etc need to be created, updated, or deleted
-      // For simplicity, we'll handle only the name updates for existing items and creation of new items
+      // Process deletions first
+      await handleDeletions();
 
-      for (const subject of subjects) {
-        // Update or create subject
-        let subjectId = subject.id;
-        if (subject.id.startsWith("new-")) {
-          // Create new subject
-          const subjectData = {
-            name: subject.name,
-            curriculum_id: curriculumId,
-          };
-          const subjectResponse = await curriculumAPI.createSubject(
-            subjectData
-          );
-          subjectId = subjectResponse.id;
-          console.log(`Subject "${subject.name}" created:`, subjectResponse);
-        } else {
-          // Update existing subject - assuming there's an updateSubject API
-          // await curriculumAPI.updateSubject(subject.id, { name: subject.name });
-          console.log(`Subject "${subject.name}" would be updated`);
-        }
-
-        // Handle courses for this subject
-        for (const course of subject.courses) {
-          if (!course.name.trim()) continue; // Skip empty courses
-
-          // Update or create course
-          let courseId = course.id;
-          if (course.id.startsWith("new-")) {
-            // Create course
-            const courseData = {
-              name: course.name,
-              subject_id: subjectId,
-            };
-            const courseResponse = await curriculumAPI.createCourse(courseData);
-            courseId = courseResponse.id;
-            console.log(`Course "${course.name}" created:`, courseResponse);
-          } else {
-            // Update existing course - assuming there's an updateCourse API
-            // await curriculumAPI.updateCourse(course.id, { name: course.name });
-            console.log(`Course "${course.name}" would be updated`);
-          }
-
-          // Handle topics for this course
-          for (const topic of course.topics) {
-            if (!topic.name.trim()) continue; // Skip empty topics
-
-            // Update or create unit (since in API, topics in UI = units in API)
-            let unitId = topic.id;
-            if (topic.id.startsWith("new-")) {
-              // Create unit
-              const unitData = {
-                name: topic.name,
-                course_id: courseId,
-              };
-              const unitResponse = await curriculumAPI.createUnit(unitData);
-              unitId = unitResponse.id;
-              console.log(`Unit "${topic.name}" created:`, unitResponse);
-            } else {
-              // Update existing unit
-              // await curriculumAPI.updateUnit(topic.id, { name: topic.name });
-              console.log(`Unit "${topic.name}" would be updated`);
-            }
-
-            // Handle units for this topic (which are topics in API)
-            for (const unit of topic.units) {
-              if (!unit.name.trim()) continue; // Skip empty units
-
-              // Update or create topic
-              if (unit.id.startsWith("new-")) {
-                // Create topic
-                const topicData = {
-                  name: unit.name,
-                  unit_id: unitId,
-                };
-                const topicResponse = await curriculumAPI.createTopic(
-                  topicData
-                );
-                console.log(`Topic "${unit.name}" created:`, topicResponse);
-              } else {
-                // Update existing topic
-                // await curriculumAPI.updateTopic(unit.id, { name: unit.name });
-                console.log(`Topic "${unit.name}" would be updated`);
-              }
-            }
-          }
-        }
-      }
+      // Now handle updates for existing items and creation of new items
+      await processHierarchyChanges();
 
       console.log("Curriculum hierarchy updated successfully!");
       toast.success("Curriculum updated successfully!");
@@ -309,6 +240,261 @@ export default function EditCurriculumModal({
       toast.error("Failed to update curriculum. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeletions = async () => {
+    // Handle deletions in reverse hierarchical order: topics -> units -> courses -> subjects
+    for (const topicId of itemsToDelete.topics) {
+      if (!topicId.startsWith("new-")) {
+        try {
+          await curriculumAPI.deleteTopic(topicId);
+          console.log(`Topic ${topicId} deleted`);
+        } catch (err) {
+          console.error(`Error deleting topic ${topicId}:`, err);
+        }
+      }
+    }
+
+    for (const unitId of itemsToDelete.units) {
+      if (!unitId.startsWith("new-")) {
+        try {
+          await curriculumAPI.deleteUnit(unitId);
+          console.log(`Unit ${unitId} deleted`);
+        } catch (err) {
+          console.error(`Error deleting unit ${unitId}:`, err);
+        }
+      }
+    }
+
+    for (const courseId of itemsToDelete.courses) {
+      if (!courseId.startsWith("new-")) {
+        try {
+          await curriculumAPI.deleteCourse(courseId);
+          console.log(`Course ${courseId} deleted`);
+        } catch (err) {
+          console.error(`Error deleting course ${courseId}:`, err);
+        }
+      }
+    }
+
+    for (const subjectId of itemsToDelete.subjects) {
+      if (!subjectId.startsWith("new-")) {
+        try {
+          await curriculumAPI.deleteSubject(subjectId);
+          console.log(`Subject ${subjectId} deleted`);
+        } catch (err) {
+          console.error(`Error deleting subject ${subjectId}:`, err);
+        }
+      }
+    }
+  };
+
+  const processHierarchyChanges = async () => {
+    for (const subject of subjects) {
+      // Check if this is a new or existing subject
+      let subjectId = subject.id;
+
+      if (subject.id.startsWith("new-")) {
+        // Create new subject
+        if (subject.name.trim()) {
+          const subjectData = {
+            name: subject.name,
+            curriculum_id: curriculumId,
+          };
+
+          try {
+            const subjectResponse = await curriculumAPI.createSubject(
+              subjectData
+            );
+            subjectId = subjectResponse.id;
+            console.log(`Subject "${subject.name}" created:`, subjectResponse);
+          } catch (err) {
+            console.error(`Error creating subject "${subject.name}":`, err);
+            continue; // Skip to next subject
+          }
+        } else {
+          continue; // Skip empty subjects
+        }
+      } else {
+        // Update existing subject
+        const originalSubject = originalSubjects.find(
+          (s) => s.id === subject.id
+        );
+
+        if (originalSubject && originalSubject.name !== subject.name) {
+          try {
+            await curriculumAPI.updateSubject(subject.id, {
+              name: subject.name,
+              curriculum_id: curriculumId, // if your API needs it
+            });
+            console.log(`Subject "${subject.name}" updated`);
+          } catch (err) {
+            console.error(`Error updating subject "${subject.name}":`, err);
+          }
+        }
+      }
+
+      // Process courses for this subject
+      if (subject.courses && subject.courses.length > 0) {
+        for (const course of subject.courses) {
+          // Check if this is a new or existing course
+          let courseId = course.id;
+
+          if (course.id.startsWith("new-")) {
+            // Create new course
+            if (course.name.trim()) {
+              const courseData = {
+                name: course.name,
+                subject_id: subjectId,
+              };
+
+              try {
+                const courseResponse = await curriculumAPI.createCourse(
+                  courseData
+                );
+                courseId = courseResponse.id;
+                console.log(`Course "${course.name}" created:`, courseResponse);
+              } catch (err) {
+                console.error(`Error creating course "${course.name}":`, err);
+                continue; // Skip to next course
+              }
+            } else {
+              continue; // Skip empty courses
+            }
+          } else {
+            // Update existing course
+            const originalSubject = originalSubjects.find(
+              (s) => s.id === subject.id
+            );
+            const originalCourse = originalSubject?.courses.find(
+              (c) => c.id === course.id
+            );
+
+            if (originalCourse && originalCourse.name !== course.name) {
+              try {
+                await curriculumAPI.updateCourse(course.id, {
+                  name: course.name,
+                });
+                console.log(`Course "${course.name}" updated`);
+              } catch (err) {
+                console.error(`Error updating course "${course.name}":`, err);
+              }
+            }
+          }
+
+          // Process topics (UI) => units (API) for this course
+          if (course.topics && course.topics.length > 0) {
+            for (const topic of course.topics) {
+              // Check if this is a new or existing topic (unit)
+              let unitId = topic.id;
+
+              if (topic.id.startsWith("new-")) {
+                // Create new unit
+                if (topic.name.trim()) {
+                  const unitData = {
+                    name: topic.name,
+                    course_id: courseId,
+                  };
+
+                  try {
+                    const unitResponse = await curriculumAPI.createUnit(
+                      unitData
+                    );
+                    unitId = unitResponse.id;
+                    console.log(`Unit "${topic.name}" created:`, unitResponse);
+                  } catch (err) {
+                    console.error(`Error creating unit "${topic.name}":`, err);
+                    continue; // Skip to next topic
+                  }
+                } else {
+                  continue; // Skip empty topics
+                }
+              } else {
+                // Update existing unit
+                const originalSubject = originalSubjects.find(
+                  (s) => s.id === subject.id
+                );
+                const originalCourse = originalSubject?.courses.find(
+                  (c) => c.id === course.id
+                );
+                const originalTopic = originalCourse?.topics.find(
+                  (t) => t.id === topic.id
+                );
+
+                if (originalTopic && originalTopic.name !== topic.name) {
+                  try {
+                    await curriculumAPI.updateUnit(topic.id, {
+                      name: topic.name,
+                    });
+                    console.log(`Unit "${topic.name}" updated`);
+                  } catch (err) {
+                    console.error(`Error updating unit "${topic.name}":`, err);
+                  }
+                }
+              }
+
+              // Process units (UI) => topics (API) for this topic
+              if (topic.units && topic.units.length > 0) {
+                for (const unit of topic.units) {
+                  if (unit.id.startsWith("new-")) {
+                    // Create new topic
+                    if (unit.name.trim()) {
+                      const topicData = {
+                        name: unit.name,
+                        unit_id: unitId,
+                      };
+
+                      try {
+                        const topicResponse = await curriculumAPI.createTopic(
+                          topicData
+                        );
+                        console.log(
+                          `Topic "${unit.name}" created:`,
+                          topicResponse
+                        );
+                      } catch (err) {
+                        console.error(
+                          `Error creating topic "${unit.name}":`,
+                          err
+                        );
+                      }
+                    }
+                  } else {
+                    // Update existing topic
+                    const originalSubject = originalSubjects.find(
+                      (s) => s.id === subject.id
+                    );
+                    const originalCourse = originalSubject?.courses.find(
+                      (c) => c.id === course.id
+                    );
+                    const originalTopic = originalCourse?.topics.find(
+                      (t) => t.id === topic.id
+                    );
+                    const originalUnit = originalTopic?.units.find(
+                      (u) => u.id === unit.id
+                    );
+
+                    if (originalUnit && originalUnit.name !== unit.name) {
+                      try {
+                        await curriculumAPI.updateTopic(unit.id, {
+                          name: unit.name,
+                        });
+                        console.log(`Topic "${unit.name}" updated`);
+                      } catch (err) {
+                        console.error(
+                          `Error updating topic "${unit.name}":`,
+                          err
+                        );
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   };
 
@@ -377,15 +563,69 @@ export default function EditCurriculumModal({
   };
 
   const removeSubject = (subjectIndex: number) => {
+    const subjectToRemove = subjects[subjectIndex];
     const newSubjects = [...subjects];
     newSubjects.splice(subjectIndex, 1);
     setSubjects(newSubjects);
+
+    if (!subjectToRemove.id.startsWith("new-")) {
+      setItemsToDelete((prev) => ({
+        ...prev,
+        subjects: [...prev.subjects, subjectToRemove.id],
+      }));
+
+      // Also add all child items to deletion lists
+      const coursesToDelete = subjectToRemove.courses
+        .filter((course) => !course.id.startsWith("new-"))
+        .map((course) => course.id);
+
+      const unitsToDelete = subjectToRemove.courses.flatMap((course) =>
+        course.topics
+          .filter((topic) => !topic.id.startsWith("new-"))
+          .map((topic) => topic.id)
+      );
+
+      const topicsToDelete = subjectToRemove.courses.flatMap((course) =>
+        course.topics.flatMap((topic) =>
+          topic.units.filter((u) => !u.id.startsWith("new-")).map((u) => u.id)
+        )
+      );
+
+      setItemsToDelete((prev) => ({
+        ...prev,
+        courses: [...prev.courses, ...coursesToDelete],
+        units: [...prev.units, ...unitsToDelete],
+        topics: [...prev.topics, ...topicsToDelete],
+      }));
+    }
   };
 
   const removeCourse = (subjectIndex: number, courseIndex: number) => {
+    const courseToRemove = subjects[subjectIndex].courses[courseIndex];
     const newSubjects = [...subjects];
     newSubjects[subjectIndex].courses.splice(courseIndex, 1);
     setSubjects(newSubjects);
+
+    if (!courseToRemove.id.startsWith("new-")) {
+      setItemsToDelete((prev) => ({
+        ...prev,
+        courses: [...prev.courses, courseToRemove.id],
+      }));
+
+      const unitsToDelete = courseToRemove.topics
+        .filter((topic) => !topic.id.startsWith("new-"))
+        .map((topic) => topic.id);
+
+      const topicsToDelete = courseToRemove.topics.flatMap((topic) =>
+        topic.units.filter((u) => !u.id.startsWith("new-")).map((u) => u.id)
+      );
+
+      setItemsToDelete((prev) => ({
+        ...prev,
+        units: [...prev.units, ...unitsToDelete],
+        topics: [...prev.topics, ...topicsToDelete],
+      }));
+    }
   };
 
   const removeTopic = (
@@ -393,9 +633,27 @@ export default function EditCurriculumModal({
     courseIndex: number,
     topicIndex: number
   ) => {
+    const topicToRemove =
+      subjects[subjectIndex].courses[courseIndex].topics[topicIndex];
     const newSubjects = [...subjects];
     newSubjects[subjectIndex].courses[courseIndex].topics.splice(topicIndex, 1);
     setSubjects(newSubjects);
+
+    if (!topicToRemove.id.startsWith("new-")) {
+      setItemsToDelete((prev) => ({
+        ...prev,
+        units: [...prev.units, topicToRemove.id],
+      }));
+
+      const topicsToDelete = topicToRemove.units
+        .filter((u) => !u.id.startsWith("new-"))
+        .map((u) => u.id);
+
+      setItemsToDelete((prev) => ({
+        ...prev,
+        topics: [...prev.topics, ...topicsToDelete],
+      }));
+    }
   };
 
   const removeUnit = (
@@ -404,11 +662,22 @@ export default function EditCurriculumModal({
     topicIndex: number,
     unitIndex: number
   ) => {
+    const unitToRemove =
+      subjects[subjectIndex].courses[courseIndex].topics[topicIndex].units[
+        unitIndex
+      ];
     const newSubjects = [...subjects];
     newSubjects[subjectIndex].courses[courseIndex].topics[
       topicIndex
     ].units.splice(unitIndex, 1);
     setSubjects(newSubjects);
+
+    if (!unitToRemove.id.startsWith("new-")) {
+      setItemsToDelete((prev) => ({
+        ...prev,
+        topics: [...prev.topics, unitToRemove.id],
+      }));
+    }
   };
 
   const updateSubjectName = (subjectIndex: number, name: string) => {
@@ -626,7 +895,7 @@ export default function EditCurriculumModal({
                               </div>
                             </div>
 
-                            {/* Topics */}
+                            {/* Topics (UI) => Units (API) */}
                             <div className="ml-3 mb-3 border-l border-gray-200 pl-4">
                               <div className="flex justify-between items-center mb-2">
                                 <h5 className="text-sm font-medium text-gray-700 flex items-center">
@@ -688,7 +957,7 @@ export default function EditCurriculumModal({
                                     </div>
                                   </div>
 
-                                  {/* Units */}
+                                  {/* Units (UI) => Topics (API) */}
                                   <div className="ml-3 mb-2 border-l border-gray-200 pl-3">
                                     <div className="flex justify-between items-center mb-1">
                                       <h6 className="text-xs font-medium text-gray-700 flex items-center">
@@ -762,10 +1031,10 @@ export default function EditCurriculumModal({
                   <div className="text-gray-500 text-sm mt-8 bg-gray-50 p-4 rounded-md border border-gray-200">
                     <p className="mb-2 font-medium">Note:</p>
                     <p>
-                      Changes to the curriculum name and description will be
-                      saved immediately. New subjects, courses, topics, and
-                      units will be created, but existing ones may require a
-                      complete refresh to see the changes.
+                      All changes to the curriculum structure will be saved when
+                      you click &quot;Save Changes&quot;. This includes updating
+                      existing subjects, courses, topics, and units, as well as
+                      creating new ones and removing any that you've deleted.
                     </p>
                   </div>
                 </div>

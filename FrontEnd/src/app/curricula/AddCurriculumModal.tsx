@@ -49,43 +49,119 @@ export default function AddCurriculumModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!curriculumName.trim()) {
       setError("Curriculum name is required");
       return;
     }
-
+  
     try {
       setIsLoading(true);
       setError("");
-
+  
       // Prepare data for API
       const description =
         curriculumDescription.trim() ||
         `${curriculumName} curriculum for generating exam questions.`;
-
+  
       const data = {
         name: curriculumName,
         description: description,
       };
-
-      // Make the API call
-      const response = await curriculumAPI.createCurriculum(data);
-
-      console.log("Curriculum created:", response);
+  
+      // Create the curriculum first
+      const curriculumResponse = await curriculumAPI.createCurriculum(data);
+      const curriculumId = curriculumResponse.id;
+      console.log("Curriculum created:", curriculumResponse);
+  
+      // Now create the hierarchy (subjects -> courses -> units -> topics)
+      for (const subject of subjects) {
+        if (!subject.name.trim()) continue; // Skip empty subjects
+        
+        // Create subject
+        const subjectData = {
+          name: subject.name,
+          curriculum_id: curriculumId
+        };
+        const subjectResponse = await curriculumAPI.createSubject(subjectData);
+        const subjectId = subjectResponse.id;
+        console.log(`Subject "${subject.name}" created:`, subjectResponse);
+        
+        // Create courses for this subject
+        for (const course of subject.courses) {
+          if (!course.name.trim()) continue; // Skip empty courses
+          
+          // Create course
+          const courseData = {
+            name: course.name,
+            subject_id: subjectId
+          };
+          const courseResponse = await curriculumAPI.createCourse(courseData);
+          const courseId = courseResponse.id;
+          console.log(`Course "${course.name}" created:`, courseResponse);
+          
+          // Create units and topics for this course
+          // Note: The UI has topics containing units, but the API expects units containing topics
+          // We need to adapt the data structure here
+          
+          for (const topic of course.topics) {
+            if (!topic.name.trim()) continue; // Skip empty topics
+            
+            // First, create a unit for this "topic" from the UI
+            const unitData = {
+              name: topic.name, // Use the topic name from UI as unit name for API
+              course_id: courseId
+            };
+            const unitResponse = await curriculumAPI.createUnit(unitData);
+            const unitId = unitResponse.id;
+            console.log(`Unit "${topic.name}" created:`, unitResponse);
+            
+            // Then create topics (which are "units" in the UI) for this unit
+            for (const unit of topic.units) {
+              if (!unit.name.trim()) continue; // Skip empty units
+              
+              // Create topic
+              const topicData = {
+                name: unit.name, // Use the unit name from UI as topic name for API
+                unit_id: unitId
+              };
+              const topicResponse = await curriculumAPI.createTopic(topicData);
+              console.log(`Topic "${unit.name}" created:`, topicResponse);
+            }
+          }
+        }
+      }
+  
+      console.log("Curriculum hierarchy created successfully!");
       toast.success("Curriculum created successfully!");
-
+  
       // Call the success callback if provided
       if (onSuccess) {
-        onSuccess(response);
+        onSuccess(curriculumResponse);
       }
-
+  
       // Reset form and close modal
       setCurriculumName("");
       setCurriculumDescription("");
+      setSubjects([
+        {
+          name: "",
+          courses: [
+            {
+              name: "",
+              topics: [
+                {
+                  name: "",
+                  units: [{ name: "" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
       onClose();
     } catch (err: any) {
-      console.error("Error creating curriculum:", err);
+      console.error("Error creating curriculum hierarchy:", err);
       setError(
         err.response?.data?.detail ||
           "Failed to create curriculum. Please try again."

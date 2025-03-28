@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Layout from "@/app/layout/Layout";
 import EditCurriculumModal from "../../EditCurriculumModal";

@@ -63,47 +63,56 @@ export default function EditCurriculumModal({
   useEffect(() => {
     const fetchCurriculum = async () => {
       if (!curriculumId) return;
-      
+
       try {
         setIsFetching(true);
         setError("");
-        
+
         // First get the basic curriculum data
         const curriculum = await curriculumAPI.getCurriculum(curriculumId);
         setCurriculumName(curriculum.name);
         setCurriculumDescription(curriculum.description || "");
-        
+
         // Then get the full hierarchy
-        const curriculumWithHierarchy = await curriculumAPI.getCurriculumWithHierarchy(curriculumId);
-        
+        const curriculumWithHierarchy =
+          await curriculumAPI.getCurriculumWithHierarchy(curriculumId);
+
         // Transform hierarchy data to match our component's structure
         let formattedSubjects = [];
-        if (curriculumWithHierarchy.subjects && curriculumWithHierarchy.subjects.length > 0) {
-          formattedSubjects = curriculumWithHierarchy.subjects.map((subject: any) => {
-            return {
-              id: subject.id,
-              name: subject.name,
-              courses: subject.courses?.map((course: any) => {
-                return {
-                  id: course.id,
-                  name: course.name,
-                  topics: course.units?.map((unit: any) => {
+        if (
+          curriculumWithHierarchy.subjects &&
+          curriculumWithHierarchy.subjects.length > 0
+        ) {
+          formattedSubjects = curriculumWithHierarchy.subjects.map(
+            (subject: any) => {
+              return {
+                id: subject.id,
+                name: subject.name,
+                courses:
+                  subject.courses?.map((course: any) => {
                     return {
-                      id: unit.id,
-                      name: unit.name,
-                      units: unit.topics?.map((topic: any) => {
-                        return {
-                          id: topic.id,
-                          name: topic.name
-                        };
-                      }) || []
+                      id: course.id,
+                      name: course.name,
+                      topics:
+                        course.units?.map((unit: any) => {
+                          return {
+                            id: unit.id,
+                            name: unit.name,
+                            units:
+                              unit.topics?.map((topic: any) => {
+                                return {
+                                  id: topic.id,
+                                  name: topic.name,
+                                };
+                              }) || [],
+                          };
+                        }) || [],
                     };
-                  }) || []
-                };
-              }) || []
-            };
-          });
-          
+                  }) || [],
+              };
+            }
+          );
+
           setSubjects(formattedSubjects);
         } else {
           // Add a default empty subject if none exist
@@ -130,7 +139,7 @@ export default function EditCurriculumModal({
       } catch (err) {
         console.error("Error fetching curriculum:", err);
         setError("Failed to load curriculum data. Please try again.");
-        
+
         // Set default empty structure
         setSubjects([
           {
@@ -163,44 +172,49 @@ export default function EditCurriculumModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!curriculumName.trim()) {
       setError("Curriculum name is required");
       return;
     }
-  
+
     try {
       setIsLoading(true);
       setError("");
-  
+
       // Prepare data for API
       const description =
         curriculumDescription.trim() ||
         `${curriculumName} curriculum for generating exam questions.`;
-  
+
       const data = {
         name: curriculumName,
         description: description,
       };
-  
+
       // Update the curriculum
-      const curriculumResponse = await curriculumAPI.updateCurriculum(curriculumId, data);
+      const curriculumResponse = await curriculumAPI.updateCurriculum(
+        curriculumId,
+        data
+      );
       console.log("Curriculum updated:", curriculumResponse);
-  
+
       // Now update the hierarchy
       // First, identify which subjects/courses/etc need to be created, updated, or deleted
       // For simplicity, we'll handle only the name updates for existing items and creation of new items
-      
+
       for (const subject of subjects) {
         // Update or create subject
         let subjectId = subject.id;
-        if (subject.id.startsWith('new-')) {
+        if (subject.id.startsWith("new-")) {
           // Create new subject
           const subjectData = {
             name: subject.name,
-            curriculum_id: curriculumId
+            curriculum_id: curriculumId,
           };
-          const subjectResponse = await curriculumAPI.createSubject(subjectData);
+          const subjectResponse = await curriculumAPI.createSubject(
+            subjectData
+          );
           subjectId = subjectResponse.id;
           console.log(`Subject "${subject.name}" created:`, subjectResponse);
         } else {
@@ -208,18 +222,18 @@ export default function EditCurriculumModal({
           // await curriculumAPI.updateSubject(subject.id, { name: subject.name });
           console.log(`Subject "${subject.name}" would be updated`);
         }
-        
+
         // Handle courses for this subject
         for (const course of subject.courses) {
           if (!course.name.trim()) continue; // Skip empty courses
-          
+
           // Update or create course
           let courseId = course.id;
-          if (course.id.startsWith('new-')) {
+          if (course.id.startsWith("new-")) {
             // Create course
             const courseData = {
               name: course.name,
-              subject_id: subjectId
+              subject_id: subjectId,
             };
             const courseResponse = await curriculumAPI.createCourse(courseData);
             courseId = courseResponse.id;
@@ -229,18 +243,18 @@ export default function EditCurriculumModal({
             // await curriculumAPI.updateCourse(course.id, { name: course.name });
             console.log(`Course "${course.name}" would be updated`);
           }
-          
+
           // Handle topics for this course
           for (const topic of course.topics) {
             if (!topic.name.trim()) continue; // Skip empty topics
-            
+
             // Update or create unit (since in API, topics in UI = units in API)
             let unitId = topic.id;
-            if (topic.id.startsWith('new-')) {
+            if (topic.id.startsWith("new-")) {
               // Create unit
               const unitData = {
                 name: topic.name,
-                course_id: courseId
+                course_id: courseId,
               };
               const unitResponse = await curriculumAPI.createUnit(unitData);
               unitId = unitResponse.id;
@@ -250,19 +264,21 @@ export default function EditCurriculumModal({
               // await curriculumAPI.updateUnit(topic.id, { name: topic.name });
               console.log(`Unit "${topic.name}" would be updated`);
             }
-            
+
             // Handle units for this topic (which are topics in API)
             for (const unit of topic.units) {
               if (!unit.name.trim()) continue; // Skip empty units
-              
+
               // Update or create topic
-              if (unit.id.startsWith('new-')) {
+              if (unit.id.startsWith("new-")) {
                 // Create topic
                 const topicData = {
                   name: unit.name,
-                  unit_id: unitId
+                  unit_id: unitId,
                 };
-                const topicResponse = await curriculumAPI.createTopic(topicData);
+                const topicResponse = await curriculumAPI.createTopic(
+                  topicData
+                );
                 console.log(`Topic "${unit.name}" created:`, topicResponse);
               } else {
                 // Update existing topic
@@ -273,15 +289,15 @@ export default function EditCurriculumModal({
           }
         }
       }
-  
+
       console.log("Curriculum hierarchy updated successfully!");
       toast.success("Curriculum updated successfully!");
-  
+
       // Call the success callback if provided
       if (onSuccess) {
         onSuccess(curriculumResponse);
       }
-  
+
       // Close modal
       onClose();
     } catch (err: any) {
@@ -447,9 +463,7 @@ export default function EditCurriculumModal({
             <div className="bg-gray-200 p-2 rounded-md mr-3">
               <BookOpen size={20} className="text-gray-700" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">
-              Edit Curriculum
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800">Edit Curriculum</h2>
           </div>
           <button
             onClick={onClose}
@@ -561,7 +575,10 @@ export default function EditCurriculumModal({
                       <div className="ml-3 mb-3 border-l border-gray-200 pl-4">
                         <div className="flex justify-between items-center mb-3">
                           <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                            <FileText size={16} className="mr-2 text-gray-500" />
+                            <FileText
+                              size={16}
+                              className="mr-2 text-gray-500"
+                            />
                             Courses
                           </h4>
                           <button
@@ -745,9 +762,10 @@ export default function EditCurriculumModal({
                   <div className="text-gray-500 text-sm mt-8 bg-gray-50 p-4 rounded-md border border-gray-200">
                     <p className="mb-2 font-medium">Note:</p>
                     <p>
-                      Changes to the curriculum name and description will be saved immediately.
-                      New subjects, courses, topics, and units will be created, but existing ones
-                      may require a complete refresh to see the changes.
+                      Changes to the curriculum name and description will be
+                      saved immediately. New subjects, courses, topics, and
+                      units will be created, but existing ones may require a
+                      complete refresh to see the changes.
                     </p>
                   </div>
                 </div>
@@ -824,4 +842,5 @@ export default function EditCurriculumModal({
         }
       `}</style>
     </div>
-  )};
+  );
+}

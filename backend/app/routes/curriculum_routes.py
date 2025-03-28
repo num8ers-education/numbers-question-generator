@@ -1,4 +1,4 @@
-# backend/app/routes/curriculum_routes.py - Update to use slug fields and fix ObjectId transformation
+# backend/app/routes/curriculum_routes.py - Fixed ObjectId transformation and slug handling
 
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
@@ -26,13 +26,28 @@ router = APIRouter(tags=["Curriculum"])
 
 # Helper functions
 def parse_object_id(id_str: str):
+    """Safely parse string to ObjectId, or return None if invalid"""
     try:
         return ObjectId(id_str)
     except:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid ID format: {id_str}"
-        )
+        return None
+
+def get_by_id_or_slug(collection, id_or_slug):
+    """Try to find document by ID first, then by slug if ID lookup fails"""
+    # Try to find by ID first
+    obj_id = parse_object_id(id_or_slug)
+    if obj_id:
+        doc = collection.find_one({"_id": obj_id})
+        if doc:
+            return doc, str(doc["_id"])
+    
+    # If not found by ID or not a valid ObjectID, try by slug
+    doc = collection.find_one({"slug": id_or_slug})
+    if doc:
+        return doc, str(doc["_id"])
+    
+    # Not found by either method
+    return None, None
 
 # Curriculum endpoints
 @router.post("/curriculum", response_model=CurriculumOut, status_code=status.HTTP_201_CREATED)
@@ -84,23 +99,15 @@ async def get_curriculum(
     curriculum_id_or_slug: str,
     token_data: TokenData = Depends(student_or_above_required)
 ):
-    # Try to find by ID first
-    try:
-        curriculum_oid = ObjectId(curriculum_id_or_slug)
-        curriculum = curriculum_collection.find_one({"_id": curriculum_oid})
-        if curriculum:
-            return transform_object_id(curriculum)
-    except:
-        # If not a valid ObjectId, try to find by slug
-        curriculum = curriculum_collection.find_one({"slug": curriculum_id_or_slug})
-        if curriculum:
-            return transform_object_id(curriculum)
+    curriculum, _ = get_by_id_or_slug(curriculum_collection, curriculum_id_or_slug)
     
-    # If we get here, the curriculum wasn't found
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Curriculum with ID or slug {curriculum_id_or_slug} not found"
-    )
+    if not curriculum:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Curriculum with ID or slug {curriculum_id_or_slug} not found"
+        )
+    
+    return transform_object_id(curriculum)
 
 @router.get("/curriculum/{curriculum_id_or_slug}/full", response_model=CurriculumWithSubjects)
 async def get_curriculum_with_hierarchy(
@@ -108,20 +115,7 @@ async def get_curriculum_with_hierarchy(
     token_data: TokenData = Depends(student_or_above_required)
 ):
     """Get full curriculum hierarchy with subjects, courses, units, and topics"""
-    # Try to find by ID first
-    curriculum = None
-    curriculum_id = None
-    
-    try:
-        curriculum_oid = ObjectId(curriculum_id_or_slug)
-        curriculum = curriculum_collection.find_one({"_id": curriculum_oid})
-        if curriculum:
-            curriculum_id = str(curriculum["_id"])
-    except:
-        # If not a valid ObjectId, try to find by slug
-        curriculum = curriculum_collection.find_one({"slug": curriculum_id_or_slug})
-        if curriculum:
-            curriculum_id = str(curriculum["_id"])
+    curriculum, curriculum_id = get_by_id_or_slug(curriculum_collection, curriculum_id_or_slug)
     
     if not curriculum:
         raise HTTPException(
@@ -135,7 +129,6 @@ async def get_curriculum_with_hierarchy(
     
     # Get all courses for these subjects
     courses = list(courses_collection.find({"subject_id": {"$in": subject_ids}}))
-    course_dict = {str(course["_id"]): course for course in courses}
     
     # Group courses by subject_id
     subject_courses = {}
@@ -201,14 +194,7 @@ async def update_curriculum(
     curriculum: CurriculumUpdate,
     token_data: TokenData = Depends(admin_required)
 ):
-    # Try to find by ID first
-    curriculum_obj = None
-    try:
-        curriculum_oid = ObjectId(curriculum_id_or_slug)
-        curriculum_obj = curriculum_collection.find_one({"_id": curriculum_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        curriculum_obj = curriculum_collection.find_one({"slug": curriculum_id_or_slug})
+    curriculum_obj, _ = get_by_id_or_slug(curriculum_collection, curriculum_id_or_slug)
     
     if not curriculum_obj:
         raise HTTPException(
@@ -258,14 +244,7 @@ async def delete_curriculum(
     curriculum_id_or_slug: str,
     token_data: TokenData = Depends(admin_required)
 ):
-    # Try to find by ID first
-    curriculum_obj = None
-    try:
-        curriculum_oid = ObjectId(curriculum_id_or_slug)
-        curriculum_obj = curriculum_collection.find_one({"_id": curriculum_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        curriculum_obj = curriculum_collection.find_one({"slug": curriculum_id_or_slug})
+    curriculum_obj, curriculum_id = get_by_id_or_slug(curriculum_collection, curriculum_id_or_slug)
     
     if not curriculum_obj:
         raise HTTPException(
@@ -274,7 +253,6 @@ async def delete_curriculum(
         )
     
     curriculum_oid = curriculum_obj["_id"]
-    curriculum_id = str(curriculum_oid)
     
     # Get all subjects for this curriculum
     subjects = subjects_collection.find({"curriculum_id": curriculum_id})
@@ -288,9 +266,6 @@ async def delete_curriculum(
     units = units_collection.find({"course_id": {"$in": course_ids}})
     unit_ids = [str(unit["_id"]) for unit in units]
     
-    # Get all topics for these units
-    topics = topics_collection.find({"unit_id": {"$in": unit_ids}})
-    
     # Delete everything in reverse order (topics → units → courses → subjects → curriculum)
     topics_collection.delete_many({"unit_id": {"$in": unit_ids}})
     units_collection.delete_many({"course_id": {"$in": course_ids}})
@@ -300,25 +275,20 @@ async def delete_curriculum(
     
     return None
 
-# Subject endpoints (similar updates needed for all other endpoints)
+# Subject endpoints
 @router.post("/subjects", response_model=SubjectOut, status_code=status.HTTP_201_CREATED)
 async def create_subject(subject: SubjectCreate, token_data: TokenData = Depends(admin_required)):
     # Check if curriculum exists
-    curriculum = None
-    try:
-        curriculum_oid = ObjectId(subject.curriculum_id)
-        curriculum = curriculum_collection.find_one({"_id": curriculum_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        curriculum = curriculum_collection.find_one({"slug": subject.curriculum_id})
-        if curriculum:
-            subject.curriculum_id = str(curriculum["_id"])
+    curriculum, curriculum_id = get_by_id_or_slug(curriculum_collection, subject.curriculum_id)
     
     if not curriculum:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Curriculum with ID or slug {subject.curriculum_id} not found"
         )
+    
+    # Update the curriculum_id with the actual ID if it was found by slug
+    subject.curriculum_id = curriculum_id
     
     # Check if subject with the same name already exists in this curriculum
     if subjects_collection.find_one({
@@ -364,16 +334,11 @@ async def get_all_subjects(
     query = {}
     if curriculum_id:
         # Check if it's an ObjectId or a slug
-        try:
-            curriculum_oid = ObjectId(curriculum_id)
-            query["curriculum_id"] = str(curriculum_oid)
-        except:
-            # If not a valid ObjectId, try to find curriculum by slug
-            curriculum = curriculum_collection.find_one({"slug": curriculum_id})
-            if curriculum:
-                query["curriculum_id"] = str(curriculum["_id"])
-            else:
-                query["curriculum_id"] = curriculum_id  # Use the value as is
+        curriculum, curr_id = get_by_id_or_slug(curriculum_collection, curriculum_id)
+        if curriculum:
+            query["curriculum_id"] = curr_id
+        else:
+            query["curriculum_id"] = curriculum_id  # Use as-is for consistent behavior
         
     subjects = subjects_collection.find(query).skip(skip).limit(limit)
     return [transform_object_id(subject) for subject in subjects]
@@ -383,24 +348,15 @@ async def get_subject(
     subject_id_or_slug: str,
     token_data: TokenData = Depends(student_or_above_required)
 ):
-    # Try to find by ID first
-    subject = None
-    try:
-        subject_oid = ObjectId(subject_id_or_slug)
-        subject = subjects_collection.find_one({"_id": subject_oid})
-        if subject:
-            return transform_object_id(subject)
-    except:
-        # If not a valid ObjectId, try to find by slug
-        subject = subjects_collection.find_one({"slug": subject_id_or_slug})
-        if subject:
-            return transform_object_id(subject)
+    subject, _ = get_by_id_or_slug(subjects_collection, subject_id_or_slug)
     
-    # If we get here, the subject wasn't found
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Subject with ID or slug {subject_id_or_slug} not found"
-    )
+    if not subject:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Subject with ID or slug {subject_id_or_slug} not found"
+        )
+    
+    return transform_object_id(subject)
 
 @router.get("/subjects/{subject_id_or_slug}/full", response_model=SubjectWithCourses)
 async def get_subject_with_hierarchy(
@@ -408,20 +364,7 @@ async def get_subject_with_hierarchy(
     token_data: TokenData = Depends(student_or_above_required)
 ):
     """Get subject with its courses, units, and topics"""
-    # Try to find by ID first
-    subject = None
-    subject_id = None
-    
-    try:
-        subject_oid = ObjectId(subject_id_or_slug)
-        subject = subjects_collection.find_one({"_id": subject_oid})
-        if subject:
-            subject_id = str(subject["_id"])
-    except:
-        # If not a valid ObjectId, try to find by slug
-        subject = subjects_collection.find_one({"slug": subject_id_or_slug})
-        if subject:
-            subject_id = str(subject["_id"])
+    subject, subject_id = get_by_id_or_slug(subjects_collection, subject_id_or_slug)
     
     if not subject:
         raise HTTPException(
@@ -480,14 +423,7 @@ async def update_subject(
     subject: SubjectUpdate,
     token_data: TokenData = Depends(admin_required)
 ):
-    # Try to find by ID first
-    subject_obj = None
-    try:
-        subject_oid = ObjectId(subject_id_or_slug)
-        subject_obj = subjects_collection.find_one({"_id": subject_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        subject_obj = subjects_collection.find_one({"slug": subject_id_or_slug})
+    subject_obj, subject_id = get_by_id_or_slug(subjects_collection, subject_id_or_slug)
     
     if not subject_obj:
         raise HTTPException(
@@ -499,23 +435,15 @@ async def update_subject(
     
     # If curriculum_id is being changed, check if the new curriculum exists
     if subject.curriculum_id and subject.curriculum_id != subject_obj["curriculum_id"]:
-        curriculum = None
-        try:
-            curriculum_oid = ObjectId(subject.curriculum_id)
-            curriculum = curriculum_collection.find_one({"_id": curriculum_oid})
-            if curriculum:
-                subject.curriculum_id = str(curriculum["_id"])
-        except:
-            # If not a valid ObjectId, try to find by slug
-            curriculum = curriculum_collection.find_one({"slug": subject.curriculum_id})
-            if curriculum:
-                subject.curriculum_id = str(curriculum["_id"])
+        curriculum, curriculum_id = get_by_id_or_slug(curriculum_collection, subject.curriculum_id)
         
         if not curriculum:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Curriculum with ID or slug {subject.curriculum_id} not found"
             )
+        
+        subject.curriculum_id = curriculum_id
     
     # Check if the new name is already taken by another subject in the same curriculum
     curriculum_id = subject.curriculum_id or subject_obj["curriculum_id"]
@@ -562,14 +490,7 @@ async def delete_subject(
     subject_id_or_slug: str,
     token_data: TokenData = Depends(admin_required)
 ):
-    # Try to find by ID first
-    subject_obj = None
-    try:
-        subject_oid = ObjectId(subject_id_or_slug)
-        subject_obj = subjects_collection.find_one({"_id": subject_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        subject_obj = subjects_collection.find_one({"slug": subject_id_or_slug})
+    subject_obj, subject_id = get_by_id_or_slug(subjects_collection, subject_id_or_slug)
     
     if not subject_obj:
         raise HTTPException(
@@ -578,7 +499,6 @@ async def delete_subject(
         )
     
     subject_oid = subject_obj["_id"]
-    subject_id = str(subject_oid)
     
     # Get all courses for this subject
     courses = courses_collection.find({"subject_id": subject_id})
@@ -587,9 +507,6 @@ async def delete_subject(
     # Get all units for these courses
     units = units_collection.find({"course_id": {"$in": course_ids}})
     unit_ids = [str(unit["_id"]) for unit in units]
-    
-    # Get all topics for these units
-    topics = topics_collection.find({"unit_id": {"$in": unit_ids}})
     
     # Delete everything in reverse order (topics → units → courses → subject)
     topics_collection.delete_many({"unit_id": {"$in": unit_ids}})
@@ -603,21 +520,16 @@ async def delete_subject(
 @router.post("/courses", response_model=CourseOut, status_code=status.HTTP_201_CREATED)
 async def create_course(course: CourseCreate, token_data: TokenData = Depends(admin_required)):
     # Check if subject exists
-    subject = None
-    try:
-        subject_oid = ObjectId(course.subject_id)
-        subject = subjects_collection.find_one({"_id": subject_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        subject = subjects_collection.find_one({"slug": course.subject_id})
-        if subject:
-            course.subject_id = str(subject["_id"])
+    subject, subject_id = get_by_id_or_slug(subjects_collection, course.subject_id)
     
     if not subject:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Subject with ID or slug {course.subject_id} not found"
         )
+    
+    # Update the subject_id with the actual ID if it was found by slug
+    course.subject_id = subject_id
     
     # Check if course with the same name already exists in this subject
     if courses_collection.find_one({
@@ -663,16 +575,11 @@ async def get_all_courses(
     query = {}
     if subject_id:
         # Check if it's an ObjectId or a slug
-        try:
-            subject_oid = ObjectId(subject_id)
-            query["subject_id"] = str(subject_oid)
-        except:
-            # If not a valid ObjectId, try to find subject by slug
-            subject = subjects_collection.find_one({"slug": subject_id})
-            if subject:
-                query["subject_id"] = str(subject["_id"])
-            else:
-                query["subject_id"] = subject_id  # Use the value as is
+        subject, subj_id = get_by_id_or_slug(subjects_collection, subject_id)
+        if subject:
+            query["subject_id"] = subj_id
+        else:
+            query["subject_id"] = subject_id  # Use as-is for consistent behavior
     
     courses = courses_collection.find(query).skip(skip).limit(limit)
     return [transform_object_id(course) for course in courses]
@@ -682,24 +589,15 @@ async def get_course(
     course_id_or_slug: str,
     token_data: TokenData = Depends(student_or_above_required)
 ):
-    # Try to find by ID first
-    course = None
-    try:
-        course_oid = ObjectId(course_id_or_slug)
-        course = courses_collection.find_one({"_id": course_oid})
-        if course:
-            return transform_object_id(course)
-    except:
-        # If not a valid ObjectId, try to find by slug
-        course = courses_collection.find_one({"slug": course_id_or_slug})
-        if course:
-            return transform_object_id(course)
+    course, _ = get_by_id_or_slug(courses_collection, course_id_or_slug)
     
-    # If we get here, the course wasn't found
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Course with ID or slug {course_id_or_slug} not found"
-    )
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Course with ID or slug {course_id_or_slug} not found"
+        )
+    
+    return transform_object_id(course)
 
 @router.get("/courses/{course_id_or_slug}/full", response_model=CourseWithUnits)
 async def get_course_with_hierarchy(
@@ -707,20 +605,7 @@ async def get_course_with_hierarchy(
     token_data: TokenData = Depends(student_or_above_required)
 ):
     """Get course with its units and topics"""
-    # Try to find by ID first
-    course = None
-    course_id = None
-    
-    try:
-        course_oid = ObjectId(course_id_or_slug)
-        course = courses_collection.find_one({"_id": course_oid})
-        if course:
-            course_id = str(course["_id"])
-    except:
-        # If not a valid ObjectId, try to find by slug
-        course = courses_collection.find_one({"slug": course_id_or_slug})
-        if course:
-            course_id = str(course["_id"])
+    course, course_id = get_by_id_or_slug(courses_collection, course_id_or_slug)
     
     if not course:
         raise HTTPException(
@@ -754,25 +639,114 @@ async def get_course_with_hierarchy(
     
     return transform_object_id(course_with_hierarchy)
 
+@router.put("/courses/{course_id_or_slug}", response_model=CourseOut)
+async def update_course(
+    course_id_or_slug: str,
+    course: CourseUpdate,
+    token_data: TokenData = Depends(admin_required)
+):
+    course_obj, course_id = get_by_id_or_slug(courses_collection, course_id_or_slug)
+    
+    if not course_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Course with ID or slug {course_id_or_slug} not found"
+        )
+    
+    course_oid = course_obj["_id"]
+    
+    # If subject_id is being changed, check if the new subject exists
+    if course.subject_id and course.subject_id != course_obj["subject_id"]:
+        subject, subject_id = get_by_id_or_slug(subjects_collection, course.subject_id)
+        
+        if not subject:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Subject with ID or slug {course.subject_id} not found"
+            )
+        
+        course.subject_id = subject_id
+    
+    # Check if the new name is already taken by another course in the same subject
+    subject_id = course.subject_id or course_obj["subject_id"]
+    if course.name and course.name != course_obj["name"]:
+        if courses_collection.find_one({
+            "name": course.name,
+            "subject_id": subject_id,
+            "_id": {"$ne": course_oid}
+        }):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Course with name '{course.name}' already exists in this subject"
+            )
+    
+    # If slug is being updated, check if it's unique
+    if course.slug and course.slug != course_obj.get("slug"):
+        if courses_collection.find_one({"slug": course.slug, "_id": {"$ne": course_oid}}):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Course with slug '{course.slug}' already exists"
+            )
+    
+    # Generate a new slug if name is changing but slug isn't provided
+    if course.name and not course.slug and course.name != course_obj["name"]:
+        course.slug = create_unique_slug(courses_collection, course.name)
+    
+    # Prepare update data, excluding None values
+    update_data = {k: v for k, v in course.dict().items() if v is not None}
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        
+        # Update the course
+        courses_collection.update_one(
+            {"_id": course_oid},
+            {"$set": update_data}
+        )
+    
+    # Return the updated course
+    updated_course = courses_collection.find_one({"_id": course_oid})
+    return transform_object_id(updated_course)
+
+@router.delete("/courses/{course_id_or_slug}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_course(
+    course_id_or_slug: str,
+    token_data: TokenData = Depends(admin_required)
+):
+    course_obj, course_id = get_by_id_or_slug(courses_collection, course_id_or_slug)
+    
+    if not course_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Course with ID or slug {course_id_or_slug} not found"
+        )
+    
+    course_oid = course_obj["_id"]
+    
+    # Get all units for this course
+    units = units_collection.find({"course_id": course_id})
+    unit_ids = [str(unit["_id"]) for unit in units]
+    
+    # Delete everything in reverse order (topics → units → course)
+    topics_collection.delete_many({"unit_id": {"$in": unit_ids}})
+    units_collection.delete_many({"course_id": course_id})
+    courses_collection.delete_one({"_id": course_oid})
+    
+    return None
+
 # Unit endpoints
 @router.post("/units", response_model=UnitOut, status_code=status.HTTP_201_CREATED)
 async def create_unit(unit: UnitCreate, token_data: TokenData = Depends(admin_required)):
     # Check if course exists
-    course = None
-    try:
-        course_oid = ObjectId(unit.course_id)
-        course = courses_collection.find_one({"_id": course_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        course = courses_collection.find_one({"slug": unit.course_id})
-        if course:
-            unit.course_id = str(course["_id"])
+    course, course_id = get_by_id_or_slug(courses_collection, unit.course_id)
     
     if not course:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Course with ID or slug {unit.course_id} not found"
         )
+    
+    # Update the course_id with the actual ID if it was found by slug
+    unit.course_id = course_id
     
     # Check if unit with the same name already exists in this course
     if units_collection.find_one({
@@ -818,16 +792,11 @@ async def get_all_units(
     query = {}
     if course_id:
         # Check if it's an ObjectId or a slug
-        try:
-            course_oid = ObjectId(course_id)
-            query["course_id"] = str(course_oid)
-        except:
-            # If not a valid ObjectId, try to find course by slug
-            course = courses_collection.find_one({"slug": course_id})
-            if course:
-                query["course_id"] = str(course["_id"])
-            else:
-                query["course_id"] = course_id  # Use the value as is
+        course, course_id_str = get_by_id_or_slug(courses_collection, course_id)
+        if course:
+            query["course_id"] = course_id_str
+        else:
+            query["course_id"] = course_id  # Use as-is for consistent behavior
     
     units = units_collection.find(query).skip(skip).limit(limit)
     return [transform_object_id(unit) for unit in units]
@@ -837,24 +806,15 @@ async def get_unit(
     unit_id_or_slug: str,
     token_data: TokenData = Depends(student_or_above_required)
 ):
-    # Try to find by ID first
-    unit = None
-    try:
-        unit_oid = ObjectId(unit_id_or_slug)
-        unit = units_collection.find_one({"_id": unit_oid})
-        if unit:
-            return transform_object_id(unit)
-    except:
-        # If not a valid ObjectId, try to find by slug
-        unit = units_collection.find_one({"slug": unit_id_or_slug})
-        if unit:
-            return transform_object_id(unit)
+    unit, _ = get_by_id_or_slug(units_collection, unit_id_or_slug)
     
-    # If we get here, the unit wasn't found
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Unit with ID or slug {unit_id_or_slug} not found"
-    )
+    if not unit:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unit with ID or slug {unit_id_or_slug} not found"
+        )
+    
+    return transform_object_id(unit)
 
 @router.get("/units/{unit_id_or_slug}/topics", response_model=UnitWithTopics)
 async def get_unit_with_topics(
@@ -862,20 +822,7 @@ async def get_unit_with_topics(
     token_data: TokenData = Depends(student_or_above_required)
 ):
     """Get unit with its topics"""
-    # Try to find by ID first
-    unit = None
-    unit_id = None
-    
-    try:
-        unit_oid = ObjectId(unit_id_or_slug)
-        unit = units_collection.find_one({"_id": unit_oid})
-        if unit:
-            unit_id = str(unit["_id"])
-    except:
-        # If not a valid ObjectId, try to find by slug
-        unit = units_collection.find_one({"slug": unit_id_or_slug})
-        if unit:
-            unit_id = str(unit["_id"])
+    unit, unit_id = get_by_id_or_slug(units_collection, unit_id_or_slug)
     
     if not unit:
         raise HTTPException(
@@ -892,25 +839,111 @@ async def get_unit_with_topics(
     
     return transform_object_id(unit_with_topics)
 
+@router.put("/units/{unit_id_or_slug}", response_model=UnitOut)
+async def update_unit(
+    unit_id_or_slug: str,
+    unit: UnitUpdate,
+    token_data: TokenData = Depends(admin_required)
+):
+    unit_obj, unit_id = get_by_id_or_slug(units_collection, unit_id_or_slug)
+    
+    if not unit_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unit with ID or slug {unit_id_or_slug} not found"
+        )
+    
+    unit_oid = unit_obj["_id"]
+    
+    # If course_id is being changed, check if the new course exists
+    if unit.course_id and unit.course_id != unit_obj["course_id"]:
+        course, course_id = get_by_id_or_slug(courses_collection, unit.course_id)
+        
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Course with ID or slug {unit.course_id} not found"
+            )
+        
+        unit.course_id = course_id
+    
+    # Check if the new name is already taken by another unit in the same course
+    course_id = unit.course_id or unit_obj["course_id"]
+    if unit.name and unit.name != unit_obj["name"]:
+        if units_collection.find_one({
+            "name": unit.name,
+            "course_id": course_id,
+            "_id": {"$ne": unit_oid}
+        }):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unit with name '{unit.name}' already exists in this course"
+            )
+    
+    # If slug is being updated, check if it's unique
+    if unit.slug and unit.slug != unit_obj.get("slug"):
+        if units_collection.find_one({"slug": unit.slug, "_id": {"$ne": unit_oid}}):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unit with slug '{unit.slug}' already exists"
+            )
+    
+    # Generate a new slug if name is changing but slug isn't provided
+    if unit.name and not unit.slug and unit.name != unit_obj["name"]:
+        unit.slug = create_unique_slug(units_collection, unit.name)
+    
+    # Prepare update data, excluding None values
+    update_data = {k: v for k, v in unit.dict().items() if v is not None}
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        
+        # Update the unit
+        units_collection.update_one(
+            {"_id": unit_oid},
+            {"$set": update_data}
+        )
+    
+    # Return the updated unit
+    updated_unit = units_collection.find_one({"_id": unit_oid})
+    return transform_object_id(updated_unit)
+
+@router.delete("/units/{unit_id_or_slug}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_unit(
+    unit_id_or_slug: str,
+    token_data: TokenData = Depends(admin_required)
+):
+    unit_obj, unit_id = get_by_id_or_slug(units_collection, unit_id_or_slug)
+    
+    if not unit_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unit with ID or slug {unit_id_or_slug} not found"
+        )
+    
+    unit_oid = unit_obj["_id"]
+    
+    # Delete all topics for this unit first
+    topics_collection.delete_many({"unit_id": unit_id})
+    
+    # Then delete the unit
+    units_collection.delete_one({"_id": unit_oid})
+    
+    return None
+
 # Topic endpoints
 @router.post("/topics", response_model=TopicOut, status_code=status.HTTP_201_CREATED)
 async def create_topic(topic: TopicCreate, token_data: TokenData = Depends(admin_required)):
     # Check if unit exists
-    unit = None
-    try:
-        unit_oid = ObjectId(topic.unit_id)
-        unit = units_collection.find_one({"_id": unit_oid})
-    except:
-        # If not a valid ObjectId, try to find by slug
-        unit = units_collection.find_one({"slug": topic.unit_id})
-        if unit:
-            topic.unit_id = str(unit["_id"])
+    unit, unit_id = get_by_id_or_slug(units_collection, topic.unit_id)
     
     if not unit:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Unit with ID or slug {topic.unit_id} not found"
         )
+    
+    # Update the unit_id with the actual ID if it was found by slug
+    topic.unit_id = unit_id
     
     # Check if topic with the same name already exists in this unit
     if topics_collection.find_one({
@@ -956,16 +989,11 @@ async def get_all_topics(
     query = {}
     if unit_id:
         # Check if it's an ObjectId or a slug
-        try:
-            unit_oid = ObjectId(unit_id)
-            query["unit_id"] = str(unit_oid)
-        except:
-            # If not a valid ObjectId, try to find unit by slug
-            unit = units_collection.find_one({"slug": unit_id})
-            if unit:
-                query["unit_id"] = str(unit["_id"])
-            else:
-                query["unit_id"] = unit_id  # Use the value as is
+        unit, unit_id_str = get_by_id_or_slug(units_collection, unit_id)
+        if unit:
+            query["unit_id"] = unit_id_str
+        else:
+            query["unit_id"] = unit_id  # Use as-is for consistent behavior
     
     topics = topics_collection.find(query).skip(skip).limit(limit)
     return [transform_object_id(topic) for topic in topics]
@@ -975,21 +1003,100 @@ async def get_topic(
     topic_id_or_slug: str,
     token_data: TokenData = Depends(student_or_above_required)
 ):
-    # Try to find by ID first
-    topic = None
-    try:
-        topic_oid = ObjectId(topic_id_or_slug)
-        topic = topics_collection.find_one({"_id": topic_oid})
-        if topic:
-            return transform_object_id(topic)
-    except:
-        # If not a valid ObjectId, try to find by slug
-        topic = topics_collection.find_one({"slug": topic_id_or_slug})
-        if topic:
-            return transform_object_id(topic)
+    topic, _ = get_by_id_or_slug(topics_collection, topic_id_or_slug)
     
-    # If we get here, the topic wasn't found
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Topic with ID or slug {topic_id_or_slug} not found"
-    )
+    if not topic:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Topic with ID or slug {topic_id_or_slug} not found"
+        )
+    
+    return transform_object_id(topic)
+
+@router.put("/topics/{topic_id_or_slug}", response_model=TopicOut)
+async def update_topic(
+    topic_id_or_slug: str,
+    topic: TopicUpdate,
+    token_data: TokenData = Depends(admin_required)
+):
+    topic_obj, topic_id = get_by_id_or_slug(topics_collection, topic_id_or_slug)
+    
+    if not topic_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Topic with ID or slug {topic_id_or_slug} not found"
+        )
+    
+    topic_oid = topic_obj["_id"]
+    
+    # If unit_id is being changed, check if the new unit exists
+    if topic.unit_id and topic.unit_id != topic_obj["unit_id"]:
+        unit, unit_id = get_by_id_or_slug(units_collection, topic.unit_id)
+        
+        if not unit:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Unit with ID or slug {topic.unit_id} not found"
+            )
+        
+        topic.unit_id = unit_id
+    
+    # Check if the new name is already taken by another topic in the same unit
+    unit_id = topic.unit_id or topic_obj["unit_id"]
+    if topic.name and topic.name != topic_obj["name"]:
+        if topics_collection.find_one({
+            "name": topic.name,
+            "unit_id": unit_id,
+            "_id": {"$ne": topic_oid}
+        }):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Topic with name '{topic.name}' already exists in this unit"
+            )
+    
+    # If slug is being updated, check if it's unique
+    if topic.slug and topic.slug != topic_obj.get("slug"):
+        if topics_collection.find_one({"slug": topic.slug, "_id": {"$ne": topic_oid}}):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Topic with slug '{topic.slug}' already exists"
+            )
+    
+    # Generate a new slug if name is changing but slug isn't provided
+    if topic.name and not topic.slug and topic.name != topic_obj["name"]:
+        topic.slug = create_unique_slug(topics_collection, topic.name)
+    
+    # Prepare update data, excluding None values
+    update_data = {k: v for k, v in topic.dict().items() if v is not None}
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        
+        # Update the topic
+        topics_collection.update_one(
+            {"_id": topic_oid},
+            {"$set": update_data}
+        )
+    
+    # Return the updated topic
+    updated_topic = topics_collection.find_one({"_id": topic_oid})
+    return transform_object_id(updated_topic)
+
+@router.delete("/topics/{topic_id_or_slug}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_topic(
+    topic_id_or_slug: str,
+    token_data: TokenData = Depends(admin_required)
+):
+    topic_obj, _ = get_by_id_or_slug(topics_collection, topic_id_or_slug)
+    
+    if not topic_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Topic with ID or slug {topic_id_or_slug} not found"
+        )
+    
+    topic_oid = topic_obj["_id"]
+    
+    # Delete the topic
+    topics_collection.delete_one({"_id": topic_oid})
+    
+    return None

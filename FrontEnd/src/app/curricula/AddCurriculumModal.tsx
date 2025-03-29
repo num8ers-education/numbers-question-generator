@@ -9,8 +9,13 @@ import {
   Layers,
   BookText,
   FileText,
-  ListOrdered,
   AlertCircle,
+  Save,
+  ChevronDown,
+  ChevronRight,
+  BookmarkIcon,
+  GraduationCap,
+  ListChecks,
 } from "lucide-react";
 import { curriculumAPI } from "@/services/api";
 import toast from "react-hot-toast";
@@ -19,6 +24,28 @@ interface AddCurriculumModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (data: any) => void;
+}
+
+interface Unit {
+  name: string;
+}
+
+interface Topic {
+  name: string;
+  units: Unit[];
+  isExpanded?: boolean;
+}
+
+interface Course {
+  name: string;
+  topics: Topic[];
+  isExpanded?: boolean;
+}
+
+interface Subject {
+  name: string;
+  courses: Course[];
+  isExpanded?: boolean;
 }
 
 export default function AddCurriculumModal({
@@ -30,15 +57,18 @@ export default function AddCurriculumModal({
   const [curriculumDescription, setCurriculumDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [subjects, setSubjects] = useState([
+  const [subjects, setSubjects] = useState<Subject[]>([
     {
       name: "",
+      isExpanded: true,
       courses: [
         {
           name: "",
+          isExpanded: true,
           topics: [
             {
               name: "",
+              isExpanded: true,
               units: [{ name: "" }],
             },
           ],
@@ -146,12 +176,15 @@ export default function AddCurriculumModal({
       setSubjects([
         {
           name: "",
+          isExpanded: true,
           courses: [
             {
               name: "",
+              isExpanded: true,
               topics: [
                 {
                   name: "",
+                  isExpanded: true,
                   units: [{ name: "" }],
                 },
               ],
@@ -177,12 +210,15 @@ export default function AddCurriculumModal({
       ...subjects,
       {
         name: "",
+        isExpanded: true,
         courses: [
           {
             name: "",
+            isExpanded: true,
             topics: [
               {
                 name: "",
+                isExpanded: true,
                 units: [{ name: "" }],
               },
             ],
@@ -196,9 +232,11 @@ export default function AddCurriculumModal({
     const newSubjects = [...subjects];
     newSubjects[subjectIndex].courses.push({
       name: "",
+      isExpanded: true,
       topics: [
         {
           name: "",
+          isExpanded: true,
           units: [{ name: "" }],
         },
       ],
@@ -210,6 +248,7 @@ export default function AddCurriculumModal({
     const newSubjects = [...subjects];
     newSubjects[subjectIndex].courses[courseIndex].topics.push({
       name: "",
+      isExpanded: true,
       units: [{ name: "" }],
     });
     setSubjects(newSubjects);
@@ -306,312 +345,379 @@ export default function AddCurriculumModal({
     setSubjects(newSubjects);
   };
 
+  const toggleSubjectExpanded = (subjectIndex: number) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].isExpanded = !newSubjects[subjectIndex].isExpanded;
+    setSubjects(newSubjects);
+  };
+
+  const toggleCourseExpanded = (subjectIndex: number, courseIndex: number) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].isExpanded = 
+      !newSubjects[subjectIndex].courses[courseIndex].isExpanded;
+    setSubjects(newSubjects);
+  };
+
+  const toggleTopicExpanded = (
+    subjectIndex: number,
+    courseIndex: number,
+    topicIndex: number
+  ) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].topics[topicIndex].isExpanded = 
+      !newSubjects[subjectIndex].courses[courseIndex].topics[topicIndex].isExpanded;
+    setSubjects(newSubjects);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
           <div className="flex items-center">
-            <div className="bg-gray-200 p-2 rounded-md mr-3">
-              <BookOpen size={20} className="text-gray-700" />
+            <div className="bg-blue-50 p-3 rounded-xl mr-4">
+              <BookOpen size={22} className="text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800">
               Add New Curriculum
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200">
+            className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
             <X size={24} />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6">
           {error && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 flex items-start">
-              <AlertCircle size={20} className="text-red-500 mr-2 mt-0.5" />
+            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start">
+              <AlertCircle size={20} className="text-red-500 mr-3 mt-0.5 flex-shrink-0" />
               <p className="text-red-700">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
+            {/* Basic Info Section */}
             <div className="mb-6">
-              <label
-                htmlFor="curriculum-name"
-                className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                <Layers size={16} className="mr-2" />
-                Curriculum Name
-              </label>
-              <input
-                type="text"
-                id="curriculum-name"
-                value={curriculumName}
-                onChange={(e) => setCurriculumName(e.target.value)}
-                placeholder="e.g., Advanced Placement (AP)"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-gray-700"
-                required
-              />
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
+              
+              <div className="mb-4">
+                <label
+                  htmlFor="curriculum-name"
+                  className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Layers size={16} className="mr-2 text-gray-500" />
+                  Curriculum Name
+                </label>
+                <input
+                  type="text"
+                  id="curriculum-name"
+                  value={curriculumName}
+                  onChange={(e) => setCurriculumName(e.target.value)}
+                  placeholder="e.g., Advanced Placement (AP)"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label
+                  htmlFor="curriculum-description"
+                  className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FileText size={16} className="mr-2 text-gray-500" />
+                  Curriculum Description
+                </label>
+                <textarea
+                  id="curriculum-description"
+                  value={curriculumDescription}
+                  onChange={(e) => setCurriculumDescription(e.target.value)}
+                  placeholder="Describe this curriculum..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 min-h-[120px] resize-none"
+                />
+              </div>
             </div>
 
+            {/* Content Structure Section */}
             <div className="mb-6">
-              <label
-                htmlFor="curriculum-description"
-                className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                <FileText size={16} className="mr-2" />
-                Curriculum Description
-              </label>
-              <textarea
-                id="curriculum-description"
-                value={curriculumDescription}
-                onChange={(e) => setCurriculumDescription(e.target.value)}
-                placeholder="Describe this curriculum..."
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-gray-700 min-h-[100px]"
-              />
-            </div>
-
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-medium text-gray-800 flex items-center">
-                  <BookText size={18} className="mr-2 text-gray-600" />
-                  Subjects
-                </h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Content Structure</h3>
                 <button
                   type="button"
                   onClick={addSubject}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors duration-200">
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium transition-colors duration-200">
                   <Plus size={16} />
                   <span>Add Subject</span>
                 </button>
               </div>
 
-              {subjects.map((subject, subjectIndex) => (
-                <div
-                  key={subjectIndex}
-                  className="border border-gray-200 rounded-md p-4 mb-5 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="w-full">
-                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                        <span className="bg-gray-200 h-6 w-6 rounded-full flex items-center justify-center mr-2 text-gray-700 font-medium">
-                          S
-                        </span>
-                        Subject Name
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={subject.name}
-                          onChange={(e) =>
-                            updateSubjectName(subjectIndex, e.target.value)
-                          }
-                          placeholder="e.g., Mathematics"
-                          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
-                        />
+              {/* Collapsible Structure for Subjects, Courses, Topics, Units */}
+              <div className="space-y-6">
+                {subjects.map((subject, subjectIndex) => (
+                  <div
+                    key={subjectIndex}
+                    className="border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+                    {/* Subject Header */}
+                    <div 
+                      className="bg-blue-50 p-4 flex items-center justify-between cursor-pointer"
+                      onClick={() => toggleSubjectExpanded(subjectIndex)}
+                    >
+                      <div className="flex items-center">
+                        <BookmarkIcon size={18} className="text-blue-600 mr-3" />
+                        <h4 className="font-medium text-blue-800">
+                          Subject {subjectIndex + 1}
+                          {subject.name && `: ${subject.name}`}
+                        </h4>
+                      </div>
+                      <div className="flex items-center">
                         {subjects.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => removeSubject(subjectIndex)}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 hover:bg-red-50 rounded-full">
-                            <Trash2 size={16} />
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSubject(subjectIndex);
+                            }}
+                            className="mr-2 text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 size={18} />
                           </button>
+                        )}
+                        {subject.isExpanded ? (
+                          <ChevronDown size={20} className="text-blue-600" />
+                        ) : (
+                          <ChevronRight size={20} className="text-blue-600" />
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Courses */}
-                  <div className="ml-3 mb-3 border-l border-gray-200 pl-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                        <FileText size={16} className="mr-2 text-gray-500" />
-                        Courses
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={() => addCourse(subjectIndex)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200">
-                        <Plus size={14} />
-                        <span>Add Course</span>
-                      </button>
-                    </div>
-
-                    {subject.courses.map((course, courseIndex) => (
-                      <div key={courseIndex} className="mb-4 ml-2">
-                        <div className="mb-3">
-                          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                            <span className="bg-gray-100 h-5 w-5 rounded-full flex items-center justify-center mr-2 text-gray-700 text-xs font-medium">
-                              C
-                            </span>
-                            Course Name
+                    {/* Subject Content */}
+                    {subject.isExpanded && (
+                      <div className="p-4 bg-white">
+                        <div className="mb-4">
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Subject Name
                           </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={course.name}
-                              onChange={(e) =>
-                                updateCourseName(
-                                  subjectIndex,
-                                  courseIndex,
-                                  e.target.value
-                                )
-                              }
-                              placeholder="e.g., Calculus AB"
-                              className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
-                            />
-                            {subject.courses.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeCourse(subjectIndex, courseIndex)
-                                }
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 hover:bg-red-50 rounded-full">
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                          </div>
+                          <input
+                            type="text"
+                            value={subject.name}
+                            onChange={(e) => updateSubjectName(subjectIndex, e.target.value)}
+                            placeholder="Subject Name (e.g., Mathematics)"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
                         </div>
 
-                        {/* Topics */}
-                        <div className="ml-3 mb-3 border-l border-gray-200 pl-4">
-                          <div className="flex justify-between items-center mb-2">
-                            <h5 className="text-sm font-medium text-gray-700 flex items-center">
-                              <ListOrdered
-                                size={14}
-                                className="mr-2 text-gray-500"
-                              />
-                              Topics
-                            </h5>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                addTopic(subjectIndex, courseIndex)
-                              }
-                              className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200">
-                              <Plus size={12} />
-                              <span>Add Topic</span>
-                            </button>
-                          </div>
-
-                          {course.topics.map((topic, topicIndex) => (
-                            <div key={topicIndex} className="mb-3 ml-2">
-                              <div className="mb-2">
-                                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                                  <span className="bg-gray-100 h-5 w-5 rounded-full flex items-center justify-center mr-2 text-gray-700 text-xs font-medium">
-                                    T
-                                  </span>
-                                  Topic Name
-                                </label>
-                                <div className="relative">
-                                  <input
-                                    type="text"
-                                    value={topic.name}
-                                    onChange={(e) =>
-                                      updateTopicName(
-                                        subjectIndex,
-                                        courseIndex,
-                                        topicIndex,
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="e.g., Limits and Continuity"
-                                    className="w-full pl-4 pr-10 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
-                                  />
-                                  {course.topics.length > 1 && (
+                        {/* Courses */}
+                        <div className="ml-2 mt-6 space-y-4">
+                          {subject.courses.map((course, courseIndex) => (
+                            <div 
+                              key={courseIndex}
+                              className="border border-purple-200 rounded-lg overflow-hidden"
+                            >
+                              {/* Course Header */}
+                              <div 
+                                className="bg-purple-50 p-3 flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleCourseExpanded(subjectIndex, courseIndex)}
+                              >
+                                <div className="flex items-center">
+                                  <GraduationCap size={16} className="text-purple-600 mr-2" />
+                                  <h5 className="font-medium text-purple-800">
+                                    Course {courseIndex + 1}
+                                    {course.name && `: ${course.name}`}
+                                  </h5>
+                                </div>
+                                <div className="flex items-center">
+                                  {courseIndex === subject.courses.length - 1 && (
                                     <button
                                       type="button"
-                                      onClick={() =>
-                                        removeTopic(
-                                          subjectIndex,
-                                          courseIndex,
-                                          topicIndex
-                                        )
-                                      }
-                                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 hover:bg-red-50 rounded-full">
-                                      <Trash2 size={12} />
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        addCourse(subjectIndex);
+                                      }}
+                                      className="mr-2 flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors">
+                                      <Plus size={14} />
+                                      <span>Add Course</span>
                                     </button>
+                                  )}
+                                  {subject.courses.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeCourse(subjectIndex, courseIndex);
+                                      }}
+                                      className="mr-2 text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                      <Trash2 size={16} />
+                                    </button>
+                                  )}
+                                  {course.isExpanded ? (
+                                    <ChevronDown size={18} className="text-purple-600" />
+                                  ) : (
+                                    <ChevronRight size={18} className="text-purple-600" />
                                   )}
                                 </div>
                               </div>
 
-                              {/* Units */}
-                              <div className="ml-3 mb-2 border-l border-gray-200 pl-3">
-                                <div className="flex justify-between items-center mb-1">
-                                  <h6 className="text-xs font-medium text-gray-700 flex items-center">
-                                    <BookText
-                                      size={12}
-                                      className="mr-1 text-gray-500"
+                              {/* Course Content */}
+                              {course.isExpanded && (
+                                <div className="p-3 bg-white">
+                                  <div className="mb-4">
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                      Course Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={course.name}
+                                      onChange={(e) => updateCourseName(subjectIndex, courseIndex, e.target.value)}
+                                      placeholder="Course Name (e.g., Calculus AB)"
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
-                                    Units
-                                  </h6>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      addUnit(
-                                        subjectIndex,
-                                        courseIndex,
-                                        topicIndex
-                                      )
-                                    }
-                                    className="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200">
-                                    <Plus size={10} />
-                                    <span>Add Unit</span>
-                                  </button>
-                                </div>
-
-                                {topic.units.map((unit, unitIndex) => (
-                                  <div key={unitIndex} className="mb-2 ml-2">
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={unit.name}
-                                        onChange={(e) =>
-                                          updateUnitName(
-                                            subjectIndex,
-                                            courseIndex,
-                                            topicIndex,
-                                            unitIndex,
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="e.g., Introduction to Limits"
-                                        className="w-full pl-3 pr-8 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-xs"
-                                      />
-                                      {topic.units.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            removeUnit(
-                                              subjectIndex,
-                                              courseIndex,
-                                              topicIndex,
-                                              unitIndex
-                                            )
-                                          }
-                                          className="absolute right-1.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-0.5 hover:bg-red-50 rounded-full">
-                                          <Trash2 size={10} />
-                                        </button>
-                                      )}
-                                    </div>
                                   </div>
-                                ))}
-                              </div>
+
+                                  {/* Topics */}
+                                  <div className="ml-2 mt-4 space-y-3">
+                                    {course.topics.map((topic, topicIndex) => (
+                                      <div 
+                                        key={topicIndex}
+                                        className="border border-teal-200 rounded-lg overflow-hidden"
+                                      >
+                                        {/* Topic Header */}
+                                        <div 
+                                          className="bg-teal-50 p-3 flex items-center justify-between cursor-pointer"
+                                          onClick={() => toggleTopicExpanded(subjectIndex, courseIndex, topicIndex)}
+                                        >
+                                          <div className="flex items-center">
+                                            <BookText size={16} className="text-teal-600 mr-2" />
+                                            <h6 className="font-medium text-teal-800">
+                                              Topic {topicIndex + 1}
+                                              {topic.name && `: ${topic.name}`}
+                                            </h6>
+                                          </div>
+                                          <div className="flex items-center">
+                                            {topicIndex === course.topics.length - 1 && (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  addTopic(subjectIndex, courseIndex);
+                                                }}
+                                                className="mr-2 flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 transition-colors">
+                                                <Plus size={12} />
+                                                <span>Add Topic</span>
+                                              </button>
+                                            )}
+                                            {course.topics.length > 1 && (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  removeTopic(subjectIndex, courseIndex, topicIndex);
+                                                }}
+                                                className="mr-2 text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                <Trash2 size={14} />
+                                              </button>
+                                            )}
+                                            {topic.isExpanded ? (
+                                              <ChevronDown size={16} className="text-teal-600" />
+                                            ) : (
+                                              <ChevronRight size={16} className="text-teal-600" />
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Topic Content */}
+                                        {topic.isExpanded && (
+                                          <div className="p-3 bg-white">
+                                            <div className="mb-3">
+                                              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                                Topic Name
+                                              </label>
+                                              <input
+                                                type="text"
+                                                value={topic.name}
+                                                onChange={(e) => updateTopicName(subjectIndex, courseIndex, topicIndex, e.target.value)}
+                                                placeholder="Topic Name (e.g., Limits and Continuity)"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                              />
+                                            </div>
+
+                                            {/* Units */}
+                                            <div className="ml-2 mt-3 space-y-2">
+                                              <div className="flex justify-between items-center mb-2">
+                                                <h6 className="text-sm font-medium text-amber-800 flex items-center">
+                                                  <ListChecks size={14} className="text-amber-600 mr-2" />
+                                                  Units
+                                                </h6>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => addUnit(subjectIndex, courseIndex, topicIndex)}
+                                                  className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-700 transition-colors">
+                                                  <Plus size={10} />
+                                                  <span>Add Unit</span>
+                                                </button>
+                                              </div>
+                                              
+                                              {topic.units.map((unit, unitIndex) => (
+                                                <div 
+                                                  key={unitIndex}
+                                                  className="border border-amber-200 rounded-lg overflow-hidden mb-2"
+                                                >
+                                                  <div className="bg-amber-50 p-2 flex justify-between items-center">
+                                                    <span className="text-sm font-medium text-amber-800">
+                                                      Unit {unitIndex + 1}
+                                                    </span>
+                                                    {topic.units.length > 1 && (
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => removeUnit(subjectIndex, courseIndex, topicIndex, unitIndex)}
+                                                        className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                        <Trash2 size={12} />
+                                                      </button>
+                                                    )}
+                                                  </div>
+                                                  <div className="p-2 bg-white">
+                                                    <input
+                                                      type="text"
+                                                      value={unit.name}
+                                                      onChange={(e) => updateUnitName(subjectIndex, courseIndex, topicIndex, unitIndex, e.target.value)}
+                                                      placeholder="Unit Name (e.g., Introduction to Limits)"
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    />
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div className="text-gray-600 text-sm bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
+              <p className="mb-2 font-medium text-blue-700">Note:</p>
+              <p>
+                All items with empty names will be ignored when saving. Make sure to fill in 
+                the names for all the content you want to include in your curriculum.
+              </p>
             </div>
           </form>
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+        <div className="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
             disabled={isLoading}>
             Cancel
           </button>
@@ -619,11 +725,11 @@ export default function AddCurriculumModal({
             type="button"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200 shadow-sm flex items-center">
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2">
             {isLoading ? (
               <>
                 <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  className="animate-spin h-5 w-5 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24">
@@ -642,7 +748,10 @@ export default function AddCurriculumModal({
                 Saving...
               </>
             ) : (
-              "Save Curriculum"
+              <>
+                <Save size={18} />
+                Save Curriculum
+              </>
             )}
           </button>
         </div>

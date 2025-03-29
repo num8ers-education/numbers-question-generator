@@ -1,4 +1,3 @@
-// src/app/curricula/CurriculaGrid.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -28,13 +27,14 @@ interface CurriculumDisplayData {
 
 interface CurriculaGridProps {
   limit?: number;
-  refreshTrigger?: number; // Add this prop to trigger refreshes
+  refreshTrigger?: number;
   onRefreshNeeded?: () => void;
 }
 
 const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGridProps) => {
   const [curricula, setCurricula] = useState<CurriculumDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch curricula whenever the component mounts or refreshTrigger changes
@@ -45,11 +45,18 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
   const fetchCurricula = async () => {
     try {
       setIsLoading(true);
+      setLoadProgress(10); // Initial progress
+      
       const data = await curriculumAPI.getAllCurricula();
-
+      setLoadProgress(40); // Update progress after initial fetch
+      
+      // Show progress advancing during the subject loading step
+      let completedItems = 0;
+      const totalItems = data.length;
+      
       // Transform API data to match component's expected format
       const formattedData = await Promise.all(
-        data.map(async (curriculum: Curriculum) => {
+        data.map(async (curriculum: Curriculum, index: number) => {
           // For each curriculum, get its subjects to determine subject area
           let subjectArea = "Various";
           let questionCount = 0;
@@ -70,6 +77,10 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
               err
             );
           }
+          
+          // Update progress as each item completes
+          completedItems++;
+          setLoadProgress(40 + Math.floor((completedItems / totalItems) * 50));
 
           return {
             id: curriculum.id,
@@ -88,6 +99,7 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
       // Apply limit if specified
       const limitedData = limit ? formattedData.slice(0, limit) : formattedData;
       setCurricula(limitedData);
+      setLoadProgress(100);
     } catch (err) {
       console.error("Error fetching curricula:", err);
       setError("Failed to load curricula. Please try again later.");
@@ -114,18 +126,56 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((index) => (
-          <div
-            key={index}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 h-64 animate-pulse">
-            <div className="h-40 bg-gray-200"></div>
-            <div className="p-4">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="relative">
+        {/* Subtle progress bar at the very top */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 z-10">
+          <div 
+            className="bg-blue-500 h-1 transition-all duration-300 ease-out"
+            style={{ width: `${loadProgress}%` }}
+          ></div>
+        </div>
+        
+        {/* Skeleton card grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-3">
+          {[1, 2, 3, 4].map((index) => (
+            <div
+              key={index}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 h-64 relative overflow-hidden">
+              
+              {/* Loading overlay with shimmer effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100 to-transparent opacity-75 skeleton-shimmer"></div>
+              
+              <div className="h-40 bg-gray-200"></div>
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+              
+              {/* Loading status indicator (subtle) */}
+              {index === 0 && (
+                <div className="absolute bottom-3 right-3 flex items-center">
+                  <div className="h-2 w-2 rounded-full bg-blue-500 mr-2 animate-pulse"></div>
+                  <span className="text-xs text-gray-500">
+                    {loadProgress < 40 ? "Loading..." : 
+                     loadProgress < 90 ? `${Math.min(Math.floor(((loadProgress - 40) / 50) * 100), 99)}%` : 
+                     "Almost ready"}
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        
+        {/* Add the shimmer animation style */}
+        <style jsx>{`
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+          .skeleton-shimmer {
+            animation: shimmer 1.5s infinite;
+          }
+        `}</style>
       </div>
     );
   }

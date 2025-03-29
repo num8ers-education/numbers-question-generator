@@ -28,17 +28,19 @@ interface CurriculumDisplayData {
 
 interface CurriculaGridProps {
   limit?: number;
+  refreshTrigger?: number; // Add this prop to trigger refreshes
   onRefreshNeeded?: () => void;
 }
 
-const CurriculaGrid = ({ limit, onRefreshNeeded }: CurriculaGridProps) => {
+const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGridProps) => {
   const [curricula, setCurricula] = useState<CurriculumDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch curricula whenever the component mounts or refreshTrigger changes
   useEffect(() => {
     fetchCurricula();
-  }, []);
+  }, [refreshTrigger]); // Add refreshTrigger as a dependency
 
   const fetchCurricula = async () => {
     try {

@@ -87,10 +87,13 @@ export default function CurriculumsPage() {
     }
   };
 
-  const handleAddCurriculumSuccess = () => {
-    // Refresh the list after adding a new curriculum
+  const handleAddCurriculumSuccess = (newCurriculum: any) => {
+    // Trigger a refresh to update the curriculum list
     setRefreshTrigger((prev) => prev + 1);
     toast.success("Curriculum added successfully!");
+    
+    // Close the modal
+    setIsAddModalOpen(false);
   };
 
   const filteredCurriculums = searchQuery
@@ -147,6 +150,7 @@ export default function CurriculumsPage() {
         {(searchQuery === "" || window.innerWidth < 768) && (
           <div className="mb-10">
             <CurriculaGrid
+              refreshTrigger={refreshTrigger}
               onRefreshNeeded={() => setRefreshTrigger((prev) => prev + 1)}
             />
           </div>
@@ -252,43 +256,43 @@ export default function CurriculumsPage() {
                                       <span>Course: {course.name}</span>
                                     </h4>
 
-                                    {course.topics &&
-                                    course.topics.length > 0 ? (
-                                      course.topics.map((topic: any) => (
+                                    {course.units &&
+                                    course.units.length > 0 ? (
+                                      course.units.map((unit: any) => (
                                         <div
-                                          key={topic.id}
+                                          key={unit.id}
                                           className="ml-5 mb-3 border-l-2 border-gray-200 pl-4">
                                           <h5 className="text-gray-700 mb-2 flex items-center">
                                             <span className="bg-gray-100 h-5 w-5 rounded-full flex items-center justify-center mr-2 text-xs text-gray-700 font-semibold">
-                                              T
+                                              U
                                             </span>
-                                            <span>Topic: {topic.name}</span>
+                                            <span>Unit: {unit.name}</span>
                                           </h5>
 
-                                          {topic.units &&
-                                          topic.units.length > 0 ? (
+                                          {unit.topics &&
+                                          unit.topics.length > 0 ? (
                                             <ul className="ml-5 space-y-2 border-l-2 border-gray-200 pl-4">
-                                              {topic.units.map((unit: any) => (
+                                              {unit.topics.map((topic: any) => (
                                                 <li
-                                                  key={unit.id}
+                                                  key={topic.id}
                                                   className="text-gray-600 text-sm flex items-center">
                                                   <span className="bg-gray-100 h-5 w-5 rounded-full flex items-center justify-center mr-2 text-xs text-gray-600 font-semibold">
-                                                    U
+                                                    T
                                                   </span>
-                                                  <span>Unit: {unit.name}</span>
+                                                  <span>Topic: {topic.name}</span>
                                                 </li>
                                               ))}
                                             </ul>
                                           ) : (
                                             <p className="ml-5 pl-4 text-sm text-gray-500">
-                                              No units available
+                                              No topics available
                                             </p>
                                           )}
                                         </div>
                                       ))
                                     ) : (
                                       <p className="ml-5 pl-4 text-sm text-gray-500">
-                                        No topics available
+                                        No units available
                                       </p>
                                     )}
                                   </div>

@@ -7,13 +7,18 @@ import {
   Trash2,
   BookOpen,
   Layers,
-  BookText,
   FileText,
-  ListOrdered,
   AlertCircle,
   Loader2,
+  Save,
+  ChevronDown,
+  ChevronRight,
+  BookmarkIcon,
+  GraduationCap,
+  BookText,
+  ListChecks,
 } from "lucide-react";
-import { curriculumAPI } from "@/services/api"; // <-- Make sure this is the file you updated!
+import { curriculumAPI } from "@/services/api";
 import toast from "react-hot-toast";
 
 interface EditCurriculumModalProps {
@@ -23,25 +28,31 @@ interface EditCurriculumModalProps {
   onSuccess?: (data: any) => void;
 }
 
+// Note: The data structure in the UI will be modified to match the requested hierarchy
+// curriculum > subject > course > unit > topic
+// However, the API calls still need to maintain the original structure
 interface Subject {
   id: string;
   name: string;
   courses: Course[];
+  isExpanded?: boolean;
 }
 
 interface Course {
   id: string;
   name: string;
-  topics: Topic[];
-}
-
-interface Topic {
-  id: string;
-  name: string;
-  units: Unit[];
+  units: Unit[]; // This was "topics" before
+  isExpanded?: boolean;
 }
 
 interface Unit {
+  id: string;
+  name: string;
+  topics: Topic[]; // This was "units" before
+  isExpanded?: boolean;
+}
+
+interface Topic {
   id: string;
   name: string;
 }
@@ -90,6 +101,7 @@ export default function EditCurriculumModal({
           await curriculumAPI.getCurriculumWithHierarchy(curriculumId);
 
         // Transform hierarchy data to match our component's structure
+        // Note: Adapting the API data structure to our new UI structure (curriculum > subject > course > unit > topic)
         let formattedSubjects = [];
         if (
           curriculumWithHierarchy.subjects &&
@@ -100,17 +112,20 @@ export default function EditCurriculumModal({
               return {
                 id: subject.id,
                 name: subject.name,
+                isExpanded: true,
                 courses:
                   subject.courses?.map((course: any) => {
                     return {
                       id: course.id,
                       name: course.name,
-                      topics:
+                      isExpanded: true,
+                      units:
                         course.units?.map((unit: any) => {
                           return {
                             id: unit.id,
                             name: unit.name,
-                            units:
+                            isExpanded: true,
+                            topics:
                               unit.topics?.map((topic: any) => {
                                 return {
                                   id: topic.id,
@@ -134,15 +149,18 @@ export default function EditCurriculumModal({
             {
               id: "new-" + Date.now(),
               name: "",
+              isExpanded: true,
               courses: [
                 {
                   id: "new-" + Date.now() + 1,
                   name: "",
-                  topics: [
+                  isExpanded: true,
+                  units: [
                     {
                       id: "new-" + Date.now() + 2,
                       name: "",
-                      units: [{ id: "new-" + Date.now() + 3, name: "" }],
+                      isExpanded: true,
+                      topics: [{ id: "new-" + Date.now() + 3, name: "" }],
                     },
                   ],
                 },
@@ -160,15 +178,18 @@ export default function EditCurriculumModal({
           {
             id: "new-" + Date.now(),
             name: "",
+            isExpanded: true,
             courses: [
               {
                 id: "new-" + Date.now() + 1,
                 name: "",
-                topics: [
+                isExpanded: true,
+                units: [
                   {
                     id: "new-" + Date.now() + 2,
                     name: "",
-                    units: [{ id: "new-" + Date.now() + 3, name: "" }],
+                    isExpanded: true,
+                    topics: [{ id: "new-" + Date.now() + 3, name: "" }],
                   },
                 ],
               },
@@ -383,17 +404,17 @@ export default function EditCurriculumModal({
             }
           }
 
-          // Process topics (UI) => units (API) for this course
-          if (course.topics && course.topics.length > 0) {
-            for (const topic of course.topics) {
-              // Check if this is a new or existing topic (unit)
-              let unitId = topic.id;
+          // Process units for this course
+          if (course.units && course.units.length > 0) {
+            for (const unit of course.units) {
+              // Check if this is a new or existing unit
+              let unitId = unit.id;
 
-              if (topic.id.startsWith("new-")) {
+              if (unit.id.startsWith("new-")) {
                 // Create new unit
-                if (topic.name.trim()) {
+                if (unit.name.trim()) {
                   const unitData = {
-                    name: topic.name,
+                    name: unit.name,
                     course_id: courseId,
                   };
 
@@ -402,13 +423,13 @@ export default function EditCurriculumModal({
                       unitData
                     );
                     unitId = unitResponse.id;
-                    console.log(`Unit "${topic.name}" created:`, unitResponse);
+                    console.log(`Unit "${unit.name}" created:`, unitResponse);
                   } catch (err) {
-                    console.error(`Error creating unit "${topic.name}":`, err);
-                    continue; // Skip to next topic
+                    console.error(`Error creating unit "${unit.name}":`, err);
+                    continue; // Skip to next unit
                   }
                 } else {
-                  continue; // Skip empty topics
+                  continue; // Skip empty units
                 }
               } else {
                 // Update existing unit
@@ -418,30 +439,30 @@ export default function EditCurriculumModal({
                 const originalCourse = originalSubject?.courses.find(
                   (c) => c.id === course.id
                 );
-                const originalTopic = originalCourse?.topics.find(
-                  (t) => t.id === topic.id
+                const originalUnit = originalCourse?.units.find(
+                  (u) => u.id === unit.id
                 );
 
-                if (originalTopic && originalTopic.name !== topic.name) {
+                if (originalUnit && originalUnit.name !== unit.name) {
                   try {
-                    await curriculumAPI.updateUnit(topic.id, {
-                      name: topic.name,
+                    await curriculumAPI.updateUnit(unit.id, {
+                      name: unit.name,
                     });
-                    console.log(`Unit "${topic.name}" updated`);
+                    console.log(`Unit "${unit.name}" updated`);
                   } catch (err) {
-                    console.error(`Error updating unit "${topic.name}":`, err);
+                    console.error(`Error updating unit "${unit.name}":`, err);
                   }
                 }
               }
 
-              // Process units (UI) => topics (API) for this topic
-              if (topic.units && topic.units.length > 0) {
-                for (const unit of topic.units) {
-                  if (unit.id.startsWith("new-")) {
+              // Process topics for this unit
+              if (unit.topics && unit.topics.length > 0) {
+                for (const topic of unit.topics) {
+                  if (topic.id.startsWith("new-")) {
                     // Create new topic
-                    if (unit.name.trim()) {
+                    if (topic.name.trim()) {
                       const topicData = {
-                        name: unit.name,
+                        name: topic.name,
                         unit_id: unitId,
                       };
 
@@ -450,12 +471,12 @@ export default function EditCurriculumModal({
                           topicData
                         );
                         console.log(
-                          `Topic "${unit.name}" created:`,
+                          `Topic "${topic.name}" created:`,
                           topicResponse
                         );
                       } catch (err) {
                         console.error(
-                          `Error creating topic "${unit.name}":`,
+                          `Error creating topic "${topic.name}":`,
                           err
                         );
                       }
@@ -468,22 +489,22 @@ export default function EditCurriculumModal({
                     const originalCourse = originalSubject?.courses.find(
                       (c) => c.id === course.id
                     );
-                    const originalTopic = originalCourse?.topics.find(
-                      (t) => t.id === topic.id
-                    );
-                    const originalUnit = originalTopic?.units.find(
+                    const originalUnit = originalCourse?.units.find(
                       (u) => u.id === unit.id
                     );
+                    const originalTopic = originalUnit?.topics.find(
+                      (t) => t.id === topic.id
+                    );
 
-                    if (originalUnit && originalUnit.name !== unit.name) {
+                    if (originalTopic && originalTopic.name !== topic.name) {
                       try {
-                        await curriculumAPI.updateTopic(unit.id, {
-                          name: unit.name,
+                        await curriculumAPI.updateTopic(topic.id, {
+                          name: topic.name,
                         });
-                        console.log(`Topic "${unit.name}" updated`);
+                        console.log(`Topic "${topic.name}" updated`);
                       } catch (err) {
                         console.error(
-                          `Error updating topic "${unit.name}":`,
+                          `Error updating topic "${topic.name}":`,
                           err
                         );
                       }
@@ -504,62 +525,24 @@ export default function EditCurriculumModal({
       {
         id: "new-" + Date.now(),
         name: "",
+        isExpanded: true,
         courses: [
           {
             id: "new-" + Date.now() + 1,
             name: "",
-            topics: [
+            isExpanded: true,
+            units: [
               {
                 id: "new-" + Date.now() + 2,
                 name: "",
-                units: [{ id: "new-" + Date.now() + 3, name: "" }],
+                isExpanded: true,
+                topics: [{ id: "new-" + Date.now() + 3, name: "" }],
               },
             ],
           },
         ],
       },
     ]);
-  };
-
-  const addCourse = (subjectIndex: number) => {
-    const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses.push({
-      id: "new-" + Date.now(),
-      name: "",
-      topics: [
-        {
-          id: "new-" + Date.now() + 1,
-          name: "",
-          units: [{ id: "new-" + Date.now() + 2, name: "" }],
-        },
-      ],
-    });
-    setSubjects(newSubjects);
-  };
-
-  const addTopic = (subjectIndex: number, courseIndex: number) => {
-    const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses[courseIndex].topics.push({
-      id: "new-" + Date.now(),
-      name: "",
-      units: [{ id: "new-" + Date.now() + 1, name: "" }],
-    });
-    setSubjects(newSubjects);
-  };
-
-  const addUnit = (
-    subjectIndex: number,
-    courseIndex: number,
-    topicIndex: number
-  ) => {
-    const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses[courseIndex].topics[
-      topicIndex
-    ].units.push({
-      id: "new-" + Date.now(),
-      name: "",
-    });
-    setSubjects(newSubjects);
   };
 
   const removeSubject = (subjectIndex: number) => {
@@ -580,14 +563,14 @@ export default function EditCurriculumModal({
         .map((course) => course.id);
 
       const unitsToDelete = subjectToRemove.courses.flatMap((course) =>
-        course.topics
-          .filter((topic) => !topic.id.startsWith("new-"))
-          .map((topic) => topic.id)
+        course.units
+          .filter((unit) => !unit.id.startsWith("new-"))
+          .map((unit) => unit.id)
       );
 
       const topicsToDelete = subjectToRemove.courses.flatMap((course) =>
-        course.topics.flatMap((topic) =>
-          topic.units.filter((u) => !u.id.startsWith("new-")).map((u) => u.id)
+        course.units.flatMap((unit) =>
+          unit.topics.filter((t) => !t.id.startsWith("new-")).map((t) => t.id)
         )
       );
 
@@ -598,6 +581,24 @@ export default function EditCurriculumModal({
         topics: [...prev.topics, ...topicsToDelete],
       }));
     }
+  };
+
+  const addCourse = (subjectIndex: number) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses.push({
+      id: "new-" + Date.now(),
+      name: "",
+      isExpanded: true,
+      units: [
+        {
+          id: "new-" + Date.now() + 1,
+          name: "",
+          isExpanded: true,
+          topics: [{ id: "new-" + Date.now() + 2, name: "" }],
+        },
+      ],
+    });
+    setSubjects(newSubjects);
   };
 
   const removeCourse = (subjectIndex: number, courseIndex: number) => {
@@ -612,12 +613,12 @@ export default function EditCurriculumModal({
         courses: [...prev.courses, courseToRemove.id],
       }));
 
-      const unitsToDelete = courseToRemove.topics
-        .filter((topic) => !topic.id.startsWith("new-"))
-        .map((topic) => topic.id);
+      const unitsToDelete = courseToRemove.units
+        .filter((unit) => !unit.id.startsWith("new-"))
+        .map((unit) => unit.id);
 
-      const topicsToDelete = courseToRemove.topics.flatMap((topic) =>
-        topic.units.filter((u) => !u.id.startsWith("new-")).map((u) => u.id)
+      const topicsToDelete = courseToRemove.units.flatMap((unit) =>
+        unit.topics.filter((t) => !t.id.startsWith("new-")).map((t) => t.id)
       );
 
       setItemsToDelete((prev) => ({
@@ -628,26 +629,37 @@ export default function EditCurriculumModal({
     }
   };
 
-  const removeTopic = (
+  const addUnit = (subjectIndex: number, courseIndex: number) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].units.push({
+      id: "new-" + Date.now(),
+      name: "",
+      isExpanded: true,
+      topics: [{ id: "new-" + Date.now() + 1, name: "" }],
+    });
+    setSubjects(newSubjects);
+  };
+
+  const removeUnit = (
     subjectIndex: number,
     courseIndex: number,
-    topicIndex: number
+    unitIndex: number
   ) => {
-    const topicToRemove =
-      subjects[subjectIndex].courses[courseIndex].topics[topicIndex];
+    const unitToRemove =
+      subjects[subjectIndex].courses[courseIndex].units[unitIndex];
     const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses[courseIndex].topics.splice(topicIndex, 1);
+    newSubjects[subjectIndex].courses[courseIndex].units.splice(unitIndex, 1);
     setSubjects(newSubjects);
 
-    if (!topicToRemove.id.startsWith("new-")) {
+    if (!unitToRemove.id.startsWith("new-")) {
       setItemsToDelete((prev) => ({
         ...prev,
-        units: [...prev.units, topicToRemove.id],
+        units: [...prev.units, unitToRemove.id],
       }));
 
-      const topicsToDelete = topicToRemove.units
-        .filter((u) => !u.id.startsWith("new-"))
-        .map((u) => u.id);
+      const topicsToDelete = unitToRemove.topics
+        .filter((t) => !t.id.startsWith("new-"))
+        .map((t) => t.id);
 
       setItemsToDelete((prev) => ({
         ...prev,
@@ -656,26 +668,39 @@ export default function EditCurriculumModal({
     }
   };
 
-  const removeUnit = (
+  const addTopic = (
     subjectIndex: number,
     courseIndex: number,
-    topicIndex: number,
     unitIndex: number
   ) => {
-    const unitToRemove =
-      subjects[subjectIndex].courses[courseIndex].topics[topicIndex].units[
-        unitIndex
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].units[unitIndex].topics.push({
+      id: "new-" + Date.now(),
+      name: "",
+    });
+    setSubjects(newSubjects);
+  };
+
+  const removeTopic = (
+    subjectIndex: number,
+    courseIndex: number,
+    unitIndex: number,
+    topicIndex: number
+  ) => {
+    const topicToRemove =
+      subjects[subjectIndex].courses[courseIndex].units[unitIndex].topics[
+        topicIndex
       ];
     const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses[courseIndex].topics[
-      topicIndex
-    ].units.splice(unitIndex, 1);
+    newSubjects[subjectIndex].courses[courseIndex].units[
+      unitIndex
+    ].topics.splice(topicIndex, 1);
     setSubjects(newSubjects);
 
-    if (!unitToRemove.id.startsWith("new-")) {
+    if (!topicToRemove.id.startsWith("new-")) {
       setItemsToDelete((prev) => ({
         ...prev,
-        topics: [...prev.topics, unitToRemove.id],
+        topics: [...prev.topics, topicToRemove.id],
       }));
     }
   };
@@ -696,358 +721,411 @@ export default function EditCurriculumModal({
     setSubjects(newSubjects);
   };
 
-  const updateTopicName = (
-    subjectIndex: number,
-    courseIndex: number,
-    topicIndex: number,
-    name: string
-  ) => {
-    const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses[courseIndex].topics[topicIndex].name =
-      name;
-    setSubjects(newSubjects);
-  };
-
   const updateUnitName = (
     subjectIndex: number,
     courseIndex: number,
-    topicIndex: number,
     unitIndex: number,
     name: string
   ) => {
     const newSubjects = [...subjects];
-    newSubjects[subjectIndex].courses[courseIndex].topics[topicIndex].units[
-      unitIndex
+    newSubjects[subjectIndex].courses[courseIndex].units[unitIndex].name = name;
+    setSubjects(newSubjects);
+  };
+
+  const updateTopicName = (
+    subjectIndex: number,
+    courseIndex: number,
+    unitIndex: number,
+    topicIndex: number,
+    name: string
+  ) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].units[unitIndex].topics[
+      topicIndex
     ].name = name;
+    setSubjects(newSubjects);
+  };
+
+  const toggleSubjectExpanded = (subjectIndex: number) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].isExpanded = !newSubjects[subjectIndex].isExpanded;
+    setSubjects(newSubjects);
+  };
+
+  const toggleCourseExpanded = (subjectIndex: number, courseIndex: number) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].isExpanded = 
+      !newSubjects[subjectIndex].courses[courseIndex].isExpanded;
+    setSubjects(newSubjects);
+  };
+
+  const toggleUnitExpanded = (
+    subjectIndex: number,
+    courseIndex: number,
+    unitIndex: number
+  ) => {
+    const newSubjects = [...subjects];
+    newSubjects[subjectIndex].courses[courseIndex].units[unitIndex].isExpanded = 
+      !newSubjects[subjectIndex].courses[courseIndex].units[unitIndex].isExpanded;
     setSubjects(newSubjects);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
           <div className="flex items-center">
-            <div className="bg-gray-200 p-2 rounded-md mr-3">
-              <BookOpen size={20} className="text-gray-700" />
+            <div className="bg-blue-50 p-3 rounded-xl mr-4">
+              <BookOpen size={22} className="text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">Edit Curriculum</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Edit Curriculum</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200">
+            className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
             <X size={24} />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6">
           {isFetching ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
               <p className="text-gray-600">Loading curriculum data...</p>
             </div>
           ) : (
             <>
               {error && (
-                <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 flex items-start">
-                  <AlertCircle size={20} className="text-red-500 mr-2 mt-0.5" />
+                <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start">
+                  <AlertCircle size={20} className="text-red-500 mr-3 mt-0.5 flex-shrink-0" />
                   <p className="text-red-700">{error}</p>
                 </div>
               )}
 
               <form onSubmit={handleSubmit}>
+                {/* Basic Info Section */}
                 <div className="mb-6">
-                  <label
-                    htmlFor="curriculum-name"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Layers size={16} className="mr-2" />
-                    Curriculum Name
-                  </label>
-                  <input
-                    type="text"
-                    id="curriculum-name"
-                    value={curriculumName}
-                    onChange={(e) => setCurriculumName(e.target.value)}
-                    placeholder="e.g., Advanced Placement (AP)"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-gray-700"
-                    required
-                  />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
+                  
+                  <div className="mb-4">
+                    <label
+                      htmlFor="curriculum-name"
+                      className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <Layers size={16} className="mr-2 text-gray-500" />
+                      Curriculum Name
+                    </label>
+                    <input
+                      type="text"
+                      id="curriculum-name"
+                      value={curriculumName}
+                      onChange={(e) => setCurriculumName(e.target.value)}
+                      placeholder="e.g., Advanced Placement (AP)"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label
+                      htmlFor="curriculum-description"
+                      className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <FileText size={16} className="mr-2 text-gray-500" />
+                      Curriculum Description
+                    </label>
+                    <textarea
+                      id="curriculum-description"
+                      value={curriculumDescription}
+                      onChange={(e) => setCurriculumDescription(e.target.value)}
+                      placeholder="Describe this curriculum..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 min-h-[120px] resize-none"
+                    />
+                  </div>
                 </div>
 
+                {/* Content Structure Section */}
                 <div className="mb-6">
-                  <label
-                    htmlFor="curriculum-description"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <FileText size={16} className="mr-2" />
-                    Curriculum Description
-                  </label>
-                  <textarea
-                    id="curriculum-description"
-                    value={curriculumDescription}
-                    onChange={(e) => setCurriculumDescription(e.target.value)}
-                    placeholder="Describe this curriculum..."
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-gray-700 min-h-[100px]"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-base font-medium text-gray-800 flex items-center">
-                      <BookText size={18} className="mr-2 text-gray-600" />
-                      Subjects
-                    </h3>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-semibold text-gray-800">Content Structure</h3>
                     <button
                       type="button"
                       onClick={addSubject}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors duration-200">
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium transition-colors duration-200">
                       <Plus size={16} />
                       <span>Add Subject</span>
                     </button>
                   </div>
 
-                  {subjects.map((subject, subjectIndex) => (
-                    <div
-                      key={subject.id}
-                      className="border border-gray-200 rounded-md p-4 mb-5 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="w-full">
-                          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                            <span className="bg-gray-200 h-6 w-6 rounded-full flex items-center justify-center mr-2 text-gray-700 font-medium">
-                              S
-                            </span>
-                            Subject Name
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={subject.name}
-                              onChange={(e) =>
-                                updateSubjectName(subjectIndex, e.target.value)
-                              }
-                              placeholder="e.g., Mathematics"
-                              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
-                            />
+                  {/* Collapsible Structure for Subjects, Courses, Units, Topics */}
+                  <div className="space-y-6">
+                    {subjects.map((subject, subjectIndex) => (
+                      <div
+                        key={subject.id}
+                        className="border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+                        {/* Subject Header */}
+                        <div 
+                          className="bg-blue-50 p-4 flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleSubjectExpanded(subjectIndex)}
+                        >
+                          <div className="flex items-center">
+                            <BookmarkIcon size={18} className="text-blue-600 mr-3" />
+                            <h4 className="font-medium text-blue-800">
+                              Subject {subjectIndex + 1}
+                              {subject.name && `: ${subject.name}`}
+                            </h4>
+                          </div>
+                          <div className="flex items-center">
                             {subjects.length > 1 && (
                               <button
                                 type="button"
-                                onClick={() => removeSubject(subjectIndex)}
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 hover:bg-red-50 rounded-full">
-                                <Trash2 size={16} />
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeSubject(subjectIndex);
+                                }}
+                                className="mr-2 text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
+                                <Trash2 size={18} />
                               </button>
+                            )}
+                            {subject.isExpanded ? (
+                              <ChevronDown size={20} className="text-blue-600" />
+                            ) : (
+                              <ChevronRight size={20} className="text-blue-600" />
                             )}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Courses */}
-                      <div className="ml-3 mb-3 border-l border-gray-200 pl-4">
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                            <FileText
-                              size={16}
-                              className="mr-2 text-gray-500"
-                            />
-                            Courses
-                          </h4>
-                          <button
-                            type="button"
-                            onClick={() => addCourse(subjectIndex)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200">
-                            <Plus size={14} />
-                            <span>Add Course</span>
-                          </button>
-                        </div>
-
-                        {subject.courses.map((course, courseIndex) => (
-                          <div key={course.id} className="mb-4 ml-2">
-                            <div className="mb-3">
-                              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                <span className="bg-gray-100 h-5 w-5 rounded-full flex items-center justify-center mr-2 text-gray-700 text-xs font-medium">
-                                  C
-                                </span>
-                                Course Name
+                        {/* Subject Content */}
+                        {subject.isExpanded && (
+                          <div className="p-4 bg-white">
+                            <div className="mb-4">
+                              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Subject Name
                               </label>
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={course.name}
-                                  onChange={(e) =>
-                                    updateCourseName(
-                                      subjectIndex,
-                                      courseIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="e.g., Calculus AB"
-                                  className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
-                                />
-                                {subject.courses.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      removeCourse(subjectIndex, courseIndex)
-                                    }
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 hover:bg-red-50 rounded-full">
-                                    <Trash2 size={14} />
-                                  </button>
-                                )}
-                              </div>
+                              <input
+                                type="text"
+                                value={subject.name}
+                                onChange={(e) => updateSubjectName(subjectIndex, e.target.value)}
+                                placeholder="Subject Name (e.g., Mathematics)"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
                             </div>
 
-                            {/* Topics (UI) => Units (API) */}
-                            <div className="ml-3 mb-3 border-l border-gray-200 pl-4">
-                              <div className="flex justify-between items-center mb-2">
-                                <h5 className="text-sm font-medium text-gray-700 flex items-center">
-                                  <ListOrdered
-                                    size={14}
-                                    className="mr-2 text-gray-500"
-                                  />
-                                  Topics
-                                </h5>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    addTopic(subjectIndex, courseIndex)
-                                  }
-                                  className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200">
-                                  <Plus size={12} />
-                                  <span>Add Topic</span>
-                                </button>
-                              </div>
-
-                              {course.topics.map((topic, topicIndex) => (
-                                <div key={topic.id} className="mb-3 ml-2">
-                                  <div className="mb-2">
-                                    <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                                      <span className="bg-gray-100 h-5 w-5 rounded-full flex items-center justify-center mr-2 text-gray-700 text-xs font-medium">
-                                        T
-                                      </span>
-                                      Topic Name
-                                    </label>
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={topic.name}
-                                        onChange={(e) =>
-                                          updateTopicName(
-                                            subjectIndex,
-                                            courseIndex,
-                                            topicIndex,
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="e.g., Limits and Continuity"
-                                        className="w-full pl-4 pr-10 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
-                                      />
-                                      {course.topics.length > 1 && (
+                            {/* Courses */}
+                            <div className="ml-2 mt-6 space-y-4">
+                              {subject.courses.map((course, courseIndex) => (
+                                <div 
+                                  key={course.id}
+                                  className="border border-purple-200 rounded-lg overflow-hidden"
+                                >
+                                  {/* Course Header */}
+                                  <div 
+                                    className="bg-purple-50 p-3 flex items-center justify-between cursor-pointer"
+                                    onClick={() => toggleCourseExpanded(subjectIndex, courseIndex)}
+                                  >
+                                    <div className="flex items-center">
+                                      <GraduationCap size={16} className="text-purple-600 mr-2" />
+                                      <h5 className="font-medium text-purple-800">
+                                        Course {courseIndex + 1}
+                                        {course.name && `: ${course.name}`}
+                                      </h5>
+                                    </div>
+                                    <div className="flex items-center">
+                                      {courseIndex === subject.courses.length - 1 && (
                                         <button
                                           type="button"
-                                          onClick={() =>
-                                            removeTopic(
-                                              subjectIndex,
-                                              courseIndex,
-                                              topicIndex
-                                            )
-                                          }
-                                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 hover:bg-red-50 rounded-full">
-                                          <Trash2 size={12} />
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            addCourse(subjectIndex);
+                                          }}
+                                          className="mr-2 flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors">
+                                          <Plus size={14} />
+                                          <span>Add Course</span>
                                         </button>
+                                      )}
+                                      {subject.courses.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeCourse(subjectIndex, courseIndex);
+                                          }}
+                                          className="mr-2 text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                          <Trash2 size={16} />
+                                        </button>
+                                      )}
+                                      {course.isExpanded ? (
+                                        <ChevronDown size={18} className="text-purple-600" />
+                                      ) : (
+                                        <ChevronRight size={18} className="text-purple-600" />
                                       )}
                                     </div>
                                   </div>
 
-                                  {/* Units (UI) => Topics (API) */}
-                                  <div className="ml-3 mb-2 border-l border-gray-200 pl-3">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <h6 className="text-xs font-medium text-gray-700 flex items-center">
-                                        <BookText
-                                          size={12}
-                                          className="mr-1 text-gray-500"
+                                  {/* Course Content */}
+                                  {course.isExpanded && (
+                                    <div className="p-3 bg-white">
+                                      <div className="mb-4">
+                                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                          Course Name
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={course.name}
+                                          onChange={(e) => updateCourseName(subjectIndex, courseIndex, e.target.value)}
+                                          placeholder="Course Name (e.g., Calculus AB)"
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
-                                        Units
-                                      </h6>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          addUnit(
-                                            subjectIndex,
-                                            courseIndex,
-                                            topicIndex
-                                          )
-                                        }
-                                        className="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200">
-                                        <Plus size={10} />
-                                        <span>Add Unit</span>
-                                      </button>
-                                    </div>
-
-                                    {topic.units.map((unit, unitIndex) => (
-                                      <div key={unit.id} className="mb-2 ml-2">
-                                        <div className="relative">
-                                          <input
-                                            type="text"
-                                            value={unit.name}
-                                            onChange={(e) =>
-                                              updateUnitName(
-                                                subjectIndex,
-                                                courseIndex,
-                                                topicIndex,
-                                                unitIndex,
-                                                e.target.value
-                                              )
-                                            }
-                                            placeholder="e.g., Introduction to Limits"
-                                            className="w-full pl-3 pr-8 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-xs"
-                                          />
-                                          {topic.units.length > 1 && (
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                removeUnit(
-                                                  subjectIndex,
-                                                  courseIndex,
-                                                  topicIndex,
-                                                  unitIndex
-                                                )
-                                              }
-                                              className="absolute right-1.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors duration-200 p-0.5 hover:bg-red-50 rounded-full">
-                                              <Trash2 size={10} />
-                                            </button>
-                                          )}
-                                        </div>
                                       </div>
-                                    ))}
-                                  </div>
+
+                                      {/* Units */}
+                                      <div className="ml-2 mt-4 space-y-3">
+                                        {course.units.map((unit, unitIndex) => (
+                                          <div 
+                                            key={unit.id}
+                                            className="border border-teal-200 rounded-lg overflow-hidden"
+                                          >
+                                            {/* Unit Header */}
+                                            <div 
+                                              className="bg-teal-50 p-3 flex items-center justify-between cursor-pointer"
+                                              onClick={() => toggleUnitExpanded(subjectIndex, courseIndex, unitIndex)}
+                                            >
+                                              <div className="flex items-center">
+                                                <BookText size={16} className="text-teal-600 mr-2" />
+                                                <h6 className="font-medium text-teal-800">
+                                                  Unit {unitIndex + 1}
+                                                  {unit.name && `: ${unit.name}`}
+                                                </h6>
+                                              </div>
+                                              <div className="flex items-center">
+                                                {unitIndex === course.units.length - 1 && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      addUnit(subjectIndex, courseIndex);
+                                                    }}
+                                                    className="mr-2 flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 transition-colors">
+                                                    <Plus size={12} />
+                                                    <span>Add Unit</span>
+                                                  </button>
+                                                )}
+                                                {course.units.length > 1 && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      removeUnit(subjectIndex, courseIndex, unitIndex);
+                                                    }}
+                                                    className="mr-2 text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                    <Trash2 size={14} />
+                                                  </button>
+                                                )}
+                                                {unit.isExpanded ? (
+                                                  <ChevronDown size={16} className="text-teal-600" />
+                                                ) : (
+                                                  <ChevronRight size={16} className="text-teal-600" />
+                                                )}
+                                              </div>
+                                            </div>
+
+                                            {/* Unit Content */}
+                                            {unit.isExpanded && (
+                                              <div className="p-3 bg-white">
+                                                <div className="mb-3">
+                                                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                                    Unit Name
+                                                  </label>
+                                                  <input
+                                                    type="text"
+                                                    value={unit.name}
+                                                    onChange={(e) => updateUnitName(subjectIndex, courseIndex, unitIndex, e.target.value)}
+                                                    placeholder="Unit Name (e.g., Limits and Continuity)"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                  />
+                                                </div>
+
+                                                {/* Topics */}
+                                                <div className="ml-2 mt-3 space-y-2">
+                                                  {unit.topics.map((topic, topicIndex) => (
+                                                    <div 
+                                                      key={topic.id}
+                                                      className="border border-amber-200 rounded-lg overflow-hidden"
+                                                    >
+                                                      <div className="bg-amber-50 p-2 flex items-center justify-between">
+                                                        <div className="flex items-center">
+                                                          <ListChecks size={14} className="text-amber-600 mr-2" />
+                                                          <span className="font-medium text-amber-800">
+                                                            Topic {topicIndex + 1}
+                                                          </span>
+                                                        </div>
+                                                        <div className="flex items-center">
+                                                          {topicIndex === unit.topics.length - 1 && (
+                                                            <button
+                                                              type="button"
+                                                              onClick={() => addTopic(subjectIndex, courseIndex, unitIndex)}
+                                                              className="mr-2 flex items-center gap-1 px-2 py-0.5 text-xs rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-700 transition-colors">
+                                                              <Plus size={10} />
+                                                              <span>Add Topic</span>
+                                                            </button>
+                                                          )}
+                                                          {unit.topics.length > 1 && (
+                                                            <button
+                                                              type="button"
+                                                              onClick={() => removeTopic(subjectIndex, courseIndex, unitIndex, topicIndex)}
+                                                              className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                              <Trash2 size={12} />
+                                                            </button>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                      <div className="p-2 bg-white">
+                                                        <input
+                                                          type="text"
+                                                          value={topic.name}
+                                                          onChange={(e) => updateTopicName(subjectIndex, courseIndex, unitIndex, topicIndex, e.target.value)}
+                                                          placeholder="Topic Name (e.g., Finding limits graphically)"
+                                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        />
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
                           </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
-                  ))}
-
-                  <div className="text-gray-500 text-sm mt-8 bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <p className="mb-2 font-medium">Note:</p>
-                    <p>
-                      All changes to the curriculum structure will be saved when
-                      you click &quot;Save Changes&quot;. This includes updating
-                      existing subjects, courses, topics, and units, as well as
-                      creating new ones and removing any that you've deleted.
-                    </p>
+                    ))}
                   </div>
+                </div>
+
+                <div className="text-gray-600 text-sm bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
+                  <p className="mb-2 font-medium text-blue-700">Note:</p>
+                  <p>
+                    All changes to the curriculum structure will be saved when
+                    you click "Save Changes". Empty items will be ignored.
+                  </p>
                 </div>
               </form>
             </>
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+        <div className="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
             disabled={isLoading || isFetching}>
             Cancel
           </button>
@@ -1055,11 +1133,11 @@ export default function EditCurriculumModal({
             type="button"
             onClick={handleSubmit}
             disabled={isLoading || isFetching}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200 shadow-sm flex items-center">
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2">
             {isLoading ? (
               <>
                 <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  className="animate-spin h-5 w-5 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24">
@@ -1078,7 +1156,10 @@ export default function EditCurriculumModal({
                 Saving...
               </>
             ) : (
-              "Save Changes"
+              <>
+                <Save size={18} />
+                Save Changes
+              </>
             )}
           </button>
         </div>

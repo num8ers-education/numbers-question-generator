@@ -779,7 +779,7 @@ export default function EditCurriculumModal({
         <div className="flex justify-between items-center p-6 border-b border-gray-100">
           <div className="flex items-center">
             <div className="bg-blue-50 p-3 rounded-xl mr-4">
-              <BookOpen size={22} className="text-blue-600" />
+              <BookOpen size={24} className="text-blue-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">Edit Curriculum</h2>
           </div>
@@ -799,7 +799,7 @@ export default function EditCurriculumModal({
           ) : (
             <>
               {error && (
-                <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start">
+                <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start">
                   <AlertCircle size={20} className="text-red-500 mr-3 mt-0.5 flex-shrink-0" />
                   <p className="text-red-700">{error}</p>
                 </div>
@@ -807,14 +807,14 @@ export default function EditCurriculumModal({
 
               <form onSubmit={handleSubmit}>
                 {/* Basic Info Section */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
+                <div className="mb-10">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-6">Basic Information</h3>
                   
-                  <div className="mb-4">
+                  <div className="mb-6">
                     <label
                       htmlFor="curriculum-name"
-                      className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <Layers size={16} className="mr-2 text-gray-500" />
+                      className="flex items-center text-sm font-medium text-gray-700 mb-3">
+                      <Layers size={18} className="mr-2 text-gray-500" />
                       Curriculum Name
                     </label>
                     <input
@@ -823,16 +823,16 @@ export default function EditCurriculumModal({
                       value={curriculumName}
                       onChange={(e) => setCurriculumName(e.target.value)}
                       placeholder="e.g., Advanced Placement (AP)"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                      className="w-full px-5 py-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
                       required
                     />
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-6">
                     <label
                       htmlFor="curriculum-description"
-                      className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <FileText size={16} className="mr-2 text-gray-500" />
+                      className="flex items-center text-sm font-medium text-gray-700 mb-3">
+                      <FileText size={18} className="mr-2 text-gray-500" />
                       Curriculum Description
                     </label>
                     <textarea
@@ -840,38 +840,40 @@ export default function EditCurriculumModal({
                       value={curriculumDescription}
                       onChange={(e) => setCurriculumDescription(e.target.value)}
                       placeholder="Describe this curriculum..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 min-h-[120px] resize-none"
+                      className="w-full px-5 py-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 min-h-[120px] resize-none"
                     />
                   </div>
                 </div>
 
                 {/* Content Structure Section */}
-                <div className="mb-6">
+                <div className="mb-10">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800">Content Structure</h3>
+                    <h3 className="text-xl font-semibold text-gray-800">Content Structure</h3>
                     <button
                       type="button"
                       onClick={addSubject}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium transition-colors duration-200">
-                      <Plus size={16} />
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium transition-colors duration-200 shadow-sm">
+                      <Plus size={18} />
                       <span>Add Subject</span>
                     </button>
                   </div>
 
                   {/* Collapsible Structure for Subjects, Courses, Units, Topics */}
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {subjects.map((subject, subjectIndex) => (
                       <div
                         key={subject.id}
-                        className="border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+                        className="border-2 border-blue-200 rounded-xl overflow-hidden shadow-sm">
                         {/* Subject Header */}
                         <div 
-                          className="bg-blue-50 p-4 flex items-center justify-between cursor-pointer"
+                          className="bg-blue-50 p-5 flex items-center justify-between cursor-pointer"
                           onClick={() => toggleSubjectExpanded(subjectIndex)}
                         >
                           <div className="flex items-center">
-                            <BookmarkIcon size={18} className="text-blue-600 mr-3" />
-                            <h4 className="font-medium text-blue-800">
+                            <div className="bg-blue-100 rounded-lg p-2 mr-3">
+                              <BookmarkIcon size={20} className="text-blue-600" />
+                            </div>
+                            <h4 className="font-semibold text-lg text-blue-800">
                               Subject {subjectIndex + 1}
                               {subject.name && `: ${subject.name}`}
                             </h4>
@@ -884,23 +886,23 @@ export default function EditCurriculumModal({
                                   e.stopPropagation();
                                   removeSubject(subjectIndex);
                                 }}
-                                className="mr-2 text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
+                                className="mr-3 text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors">
                                 <Trash2 size={18} />
                               </button>
                             )}
                             {subject.isExpanded ? (
-                              <ChevronDown size={20} className="text-blue-600" />
+                              <ChevronDown size={22} className="text-blue-600" />
                             ) : (
-                              <ChevronRight size={20} className="text-blue-600" />
+                              <ChevronRight size={22} className="text-blue-600" />
                             )}
                           </div>
                         </div>
 
                         {/* Subject Content */}
                         {subject.isExpanded && (
-                          <div className="p-4 bg-white">
-                            <div className="mb-4">
-                              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          <div className="p-6 bg-white">
+                            <div className="mb-6">
+                              <label className="text-base font-medium text-gray-700 mb-3 block">
                                 Subject Name
                               </label>
                               <input
@@ -908,25 +910,27 @@ export default function EditCurriculumModal({
                                 value={subject.name}
                                 onChange={(e) => updateSubjectName(subjectIndex, e.target.value)}
                                 placeholder="Subject Name (e.g., Mathematics)"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                               />
                             </div>
 
                             {/* Courses */}
-                            <div className="ml-2 mt-6 space-y-4">
+                            <div className="ml-6 mt-8 space-y-6">
                               {subject.courses.map((course, courseIndex) => (
                                 <div 
                                   key={course.id}
-                                  className="border border-purple-200 rounded-lg overflow-hidden"
+                                  className="border-2 border-purple-200 rounded-xl overflow-hidden shadow-sm"
                                 >
                                   {/* Course Header */}
                                   <div 
-                                    className="bg-purple-50 p-3 flex items-center justify-between cursor-pointer"
+                                    className="bg-purple-50 p-4 flex items-center justify-between cursor-pointer"
                                     onClick={() => toggleCourseExpanded(subjectIndex, courseIndex)}
                                   >
                                     <div className="flex items-center">
-                                      <GraduationCap size={16} className="text-purple-600 mr-2" />
-                                      <h5 className="font-medium text-purple-800">
+                                      <div className="bg-purple-100 rounded-lg p-1.5 mr-3">
+                                        <GraduationCap size={18} className="text-purple-600" />
+                                      </div>
+                                      <h5 className="font-semibold text-base text-purple-800">
                                         Course {courseIndex + 1}
                                         {course.name && `: ${course.name}`}
                                       </h5>
@@ -939,8 +943,8 @@ export default function EditCurriculumModal({
                                             e.stopPropagation();
                                             addCourse(subjectIndex);
                                           }}
-                                          className="mr-2 flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors">
-                                          <Plus size={14} />
+                                          className="mr-3 flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors shadow-sm">
+                                          <Plus size={16} />
                                           <span>Add Course</span>
                                         </button>
                                       )}
@@ -951,23 +955,23 @@ export default function EditCurriculumModal({
                                             e.stopPropagation();
                                             removeCourse(subjectIndex, courseIndex);
                                           }}
-                                          className="mr-2 text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                          className="mr-3 text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
                                           <Trash2 size={16} />
                                         </button>
                                       )}
                                       {course.isExpanded ? (
-                                        <ChevronDown size={18} className="text-purple-600" />
+                                        <ChevronDown size={20} className="text-purple-600" />
                                       ) : (
-                                        <ChevronRight size={18} className="text-purple-600" />
+                                        <ChevronRight size={20} className="text-purple-600" />
                                       )}
                                     </div>
                                   </div>
 
                                   {/* Course Content */}
                                   {course.isExpanded && (
-                                    <div className="p-3 bg-white">
-                                      <div className="mb-4">
-                                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                    <div className="p-5 bg-white">
+                                      <div className="mb-5">
+                                        <label className="text-base font-medium text-gray-700 mb-2 block">
                                           Course Name
                                         </label>
                                         <input
@@ -975,25 +979,27 @@ export default function EditCurriculumModal({
                                           value={course.name}
                                           onChange={(e) => updateCourseName(subjectIndex, courseIndex, e.target.value)}
                                           placeholder="Course Name (e.g., Calculus AB)"
-                                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                                         />
                                       </div>
 
                                       {/* Units */}
-                                      <div className="ml-2 mt-4 space-y-3">
+                                      <div className="ml-5 mt-7 space-y-5">
                                         {course.units.map((unit, unitIndex) => (
                                           <div 
                                             key={unit.id}
-                                            className="border border-teal-200 rounded-lg overflow-hidden"
+                                            className="border-2 border-teal-200 rounded-lg overflow-hidden shadow-sm"
                                           >
                                             {/* Unit Header */}
                                             <div 
-                                              className="bg-teal-50 p-3 flex items-center justify-between cursor-pointer"
+                                              className="bg-teal-50 p-3.5 flex items-center justify-between cursor-pointer"
                                               onClick={() => toggleUnitExpanded(subjectIndex, courseIndex, unitIndex)}
                                             >
                                               <div className="flex items-center">
-                                                <BookText size={16} className="text-teal-600 mr-2" />
-                                                <h6 className="font-medium text-teal-800">
+                                                <div className="bg-teal-100 rounded-lg p-1.5 mr-2.5">
+                                                  <BookText size={16} className="text-teal-600" />
+                                                </div>
+                                                <h6 className="font-semibold text-base text-teal-800">
                                                   Unit {unitIndex + 1}
                                                   {unit.name && `: ${unit.name}`}
                                                 </h6>
@@ -1006,8 +1012,8 @@ export default function EditCurriculumModal({
                                                       e.stopPropagation();
                                                       addUnit(subjectIndex, courseIndex);
                                                     }}
-                                                    className="mr-2 flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 transition-colors">
-                                                    <Plus size={12} />
+                                                    className="mr-3 flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 transition-colors shadow-sm">
+                                                    <Plus size={14} />
                                                     <span>Add Unit</span>
                                                   </button>
                                                 )}
@@ -1018,23 +1024,23 @@ export default function EditCurriculumModal({
                                                       e.stopPropagation();
                                                       removeUnit(subjectIndex, courseIndex, unitIndex);
                                                     }}
-                                                    className="mr-2 text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                    className="mr-3 text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
                                                     <Trash2 size={14} />
                                                   </button>
                                                 )}
                                                 {unit.isExpanded ? (
-                                                  <ChevronDown size={16} className="text-teal-600" />
+                                                  <ChevronDown size={18} className="text-teal-600" />
                                                 ) : (
-                                                  <ChevronRight size={16} className="text-teal-600" />
+                                                  <ChevronRight size={18} className="text-teal-600" />
                                                 )}
                                               </div>
                                             </div>
 
                                             {/* Unit Content */}
                                             {unit.isExpanded && (
-                                              <div className="p-3 bg-white">
-                                                <div className="mb-3">
-                                                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                              <div className="p-4 bg-white">
+                                                <div className="mb-4">
+                                                  <label className="text-base font-medium text-gray-700 mb-2 block">
                                                     Unit Name
                                                   </label>
                                                   <input
@@ -1042,51 +1048,60 @@ export default function EditCurriculumModal({
                                                     value={unit.name}
                                                     onChange={(e) => updateUnitName(subjectIndex, courseIndex, unitIndex, e.target.value)}
                                                     placeholder="Unit Name (e.g., Limits and Continuity)"
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                                                   />
                                                 </div>
 
                                                 {/* Topics */}
-                                                <div className="ml-2 mt-3 space-y-2">
+                                                <div className="ml-5 mt-6 space-y-4">
+                                                  <div className="flex justify-between items-center mb-3">
+                                                    <h6 className="text-base font-medium text-amber-800 flex items-center">
+                                                      <div className="bg-amber-100 rounded-lg p-1.5 mr-2">
+                                                        <ListChecks size={14} className="text-amber-600" />
+                                                      </div>
+                                                      Topics
+                                                    </h6>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => addTopic(subjectIndex, courseIndex, unitIndex)}
+                                                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-700 transition-colors shadow-sm">
+                                                      <Plus size={14} />
+                                                      <span>Add Topic</span>
+                                                    </button>
+                                                  </div>
+                                                  
                                                   {unit.topics.map((topic, topicIndex) => (
                                                     <div 
                                                       key={topic.id}
-                                                      className="border border-amber-200 rounded-lg overflow-hidden"
+                                                      className="border-2 border-amber-200 rounded-lg overflow-hidden mb-4 shadow-sm"
                                                     >
-                                                      <div className="bg-amber-50 p-2 flex items-center justify-between">
-                                                        <div className="flex items-center">
-                                                          <ListChecks size={14} className="text-amber-600 mr-2" />
-                                                          <span className="font-medium text-amber-800">
-                                                            Topic {topicIndex + 1}
-                                                          </span>
-                                                        </div>
-                                                        <div className="flex items-center">
-                                                          {topicIndex === unit.topics.length - 1 && (
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => addTopic(subjectIndex, courseIndex, unitIndex)}
-                                                              className="mr-2 flex items-center gap-1 px-2 py-0.5 text-xs rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-700 transition-colors">
-                                                              <Plus size={10} />
-                                                              <span>Add Topic</span>
-                                                            </button>
-                                                          )}
-                                                          {unit.topics.length > 1 && (
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => removeTopic(subjectIndex, courseIndex, unitIndex, topicIndex)}
-                                                              className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
-                                                              <Trash2 size={12} />
-                                                            </button>
-                                                          )}
-                                                        </div>
+                                                      <div className="bg-amber-50 p-3 flex justify-between items-center">
+                                                        <span className="font-medium text-amber-800 flex items-center">
+                                                          <div className="bg-amber-100 rounded-full p-1 mr-2 w-6 h-6 flex items-center justify-center">
+                                                            <span className="text-xs font-bold text-amber-700">{topicIndex + 1}</span>
+                                                          </div>
+                                                          Topic {topicIndex + 1}
+                                                          {topic.name && `: ${topic.name}`}
+                                                        </span>
+                                                        {unit.topics.length > 1 && (
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => removeTopic(subjectIndex, courseIndex, unitIndex, topicIndex)}
+                                                            className="text-gray-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
+                                                            <Trash2 size={14} />
+                                                          </button>
+                                                        )}
                                                       </div>
-                                                      <div className="p-2 bg-white">
+                                                      <div className="p-4 bg-white">
+                                                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                                          Topic Name
+                                                        </label>
                                                         <input
                                                           type="text"
                                                           value={topic.name}
                                                           onChange={(e) => updateTopicName(subjectIndex, courseIndex, unitIndex, topicIndex, e.target.value)}
                                                           placeholder="Topic Name (e.g., Finding limits graphically)"
-                                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                                                         />
                                                       </div>
                                                     </div>
@@ -1109,8 +1124,8 @@ export default function EditCurriculumModal({
                   </div>
                 </div>
 
-                <div className="text-gray-600 text-sm bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
-                  <p className="mb-2 font-medium text-blue-700">Note:</p>
+                <div className="text-gray-600 text-sm bg-blue-50 p-5 rounded-xl border border-blue-100 mb-8">
+                  <p className="mb-2 font-medium text-blue-700 text-base">Note:</p>
                   <p>
                     All changes to the curriculum structure will be saved when
                     you click "Save Changes". Empty items will be ignored.
@@ -1121,11 +1136,11 @@ export default function EditCurriculumModal({
           )}
         </div>
 
-        <div className="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+        <div className="p-6 border-t border-gray-100 flex justify-end gap-4 bg-gray-50">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
+            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
             disabled={isLoading || isFetching}>
             Cancel
           </button>
@@ -1133,7 +1148,7 @@ export default function EditCurriculumModal({
             type="button"
             onClick={handleSubmit}
             disabled={isLoading || isFetching}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2">
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2">
             {isLoading ? (
               <>
                 <svg

@@ -31,11 +31,56 @@ interface CurriculaGridProps {
   onRefreshNeeded?: () => void;
 }
 
+// Add confirmation dialog component
+const ConfirmationDialog = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string;
+}) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+        <p className="text-gray-600 mb-4">{message}</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-white transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGridProps) => {
   const [curricula, setCurricula] = useState<CurriculumDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add states for deletion handling
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [curriculumToDelete, setCurriculumToDelete] = useState<string | null>(null);
 
   // Fetch curricula whenever the component mounts or refreshTrigger changes
   useEffect(() => {
@@ -109,18 +154,41 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
     }
   };
 
+  // Prepare for deletion
+  const handleDeleteRequest = (id: string) => {
+    setCurriculumToDelete(id);
+    setConfirmDialogOpen(true);
+  };
+
   // Function to handle curriculum deletion
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this curriculum?")) {
-      try {
-        await curriculumAPI.deleteCurriculum(id);
-        toast.success("Curriculum deleted successfully");
-        setCurricula(curricula.filter((c) => c.id !== id));
-        if (onRefreshNeeded) onRefreshNeeded();
-      } catch (err) {
-        console.error("Error deleting curriculum:", err);
-        toast.error("Failed to delete curriculum");
-      }
+  const handleDelete = async () => {
+    if (!curriculumToDelete) return;
+    
+    try {
+      // Set deleting state to show visual feedback
+      setDeletingId(curriculumToDelete);
+      
+      // Close the confirmation dialog
+      setConfirmDialogOpen(false);
+      
+      // Delete the curriculum
+      await curriculumAPI.deleteCurriculum(curriculumToDelete);
+      
+      // Show success message
+      toast.success("Curriculum deleted successfully");
+      
+      // Update the UI by removing the deleted curriculum
+      setCurricula(curricula.filter((c) => c.id !== curriculumToDelete));
+      
+      // Notify parent component if needed
+      if (onRefreshNeeded) onRefreshNeeded();
+    } catch (err) {
+      console.error("Error deleting curriculum:", err);
+      toast.error("Failed to delete curriculum");
+    } finally {
+      // Clear the deleting state
+      setDeletingId(null);
+      setCurriculumToDelete(null);
     }
   };
 
@@ -221,15 +289,35 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {curricula.map((curriculum) => (
-        <CurriculumCard
-          key={curriculum.id}
-          {...curriculum}
-          onDelete={() => handleDelete(curriculum.id)}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {curricula.map((curriculum) => (
+          <div key={curriculum.id} className="relative">
+            {/* Deletion loading overlay */}
+            {deletingId === curriculum.id && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500 mb-2"></div>
+                <span className="text-sm text-gray-600">Deleting...</span>
+              </div>
+            )}
+            
+            <CurriculumCard
+              {...curriculum}
+              onDelete={() => handleDeleteRequest(curriculum.id)}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Curriculum"
+        message="Are you sure you want to delete this curriculum? This action cannot be undone."
+      />
+    </>
   );
 };
 

@@ -259,14 +259,14 @@ class AIService:
         """Call OpenAI API to generate questions"""
         try:
             # Import here to avoid importing if not needed
-            from openai import AsyncOpenAI
+            import openai
             
-            # Initialize client
-            client = AsyncOpenAI(api_key=openai_api_key)
+            # Set the API key directly
+            openai.api_key = openai_api_key
             
-            # Make the API call
-            response = await client.chat.completions.create(
-                model="gpt-4",  # Or any other appropriate model
+            # Make the API call using the older style OpenAI API
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini",  # Or any other appropriate model
                 messages=[
                     {"role": "system", "content": "You are an expert in creating educational assessment questions."},
                     {"role": "user", "content": prompt}
@@ -275,7 +275,7 @@ class AIService:
                 max_tokens=3000
             )
             
-            return response.choices[0].message.content
+            return response.choices[0].message['content']
         except Exception as e:
             raise Exception(f"OpenAI API error: {str(e)}")
     

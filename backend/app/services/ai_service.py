@@ -21,8 +21,9 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 class AIService:
     """Service for interacting with AI to generate questions"""
     
-    @staticmethod
+    @classmethod
     async def generate_questions(
+        cls,
         request: QuestionGenerationRequest,
         user_id: str
     ) -> List[Dict[str, Any]]:
@@ -60,7 +61,7 @@ class AIService:
         question_types_str = ", ".join([qt.value for qt in request.question_types])
         
         # Get prompt template - either default or custom
-        prompt_template = await AIService._get_prompt_template(request.custom_prompt)
+        prompt_template = await cls._get_prompt_template(request.custom_prompt)
         
         # Format the prompt
         prompt = prompt_template.format(
@@ -77,26 +78,26 @@ class AIService:
         
         # Call the AI model to generate questions
         try:
-            response = await AIService._call_openai(prompt)
+            response = await cls._call_openai(prompt)
             
             # Parse the response into questions
-            questions = AIService._parse_questions(response)
+            questions = cls._parse_questions(response)
             
             # Check if we got the requested number of questions
             if len(questions) < request.num_questions:
                 # If not enough questions, retry with a more explicit prompt
                 retry_prompt = prompt + "\n\nYou did not provide enough questions. Please generate exactly " + \
                               f"{request.num_questions} questions in the requested format."
-                response = await AIService._call_openai(retry_prompt)
-                questions = AIService._parse_questions(response)
+                response = await cls._call_openai(retry_prompt)
+                questions = cls._parse_questions(response)
             
             # Validate and format questions
             formatted_questions = []
             for q in questions[:request.num_questions]:  # Limit to requested number
                 # Ensure question has all required fields
-                if AIService._validate_question(q):
+                if cls._validate_question(q):
                     # Compute content hash to avoid duplicates
-                    content_hash = AIService._compute_content_hash(q)
+                    content_hash = cls._compute_content_hash(q)
                     
                     # Add metadata
                     formatted_question = {
@@ -124,8 +125,9 @@ class AIService:
             # Handle any errors from the OpenAI call
             raise Exception(f"Error generating questions: {str(e)}")
     
-    @staticmethod
+    @classmethod
     async def regenerate_question(
+        cls,
         request: QuestionRegenerationRequest,
         user_id: str
     ) -> Dict[str, Any]:
@@ -156,7 +158,7 @@ class AIService:
         # Get or create custom prompt
         custom_prompt = request.with_custom_prompt or existing_question.get("ai_prompt")
         if not custom_prompt:
-            prompt_template = await AIService._get_prompt_template()
+            prompt_template = await cls._get_prompt_template()
             
             # Format the prompt for a single question
             custom_prompt = prompt_template.format(
@@ -173,16 +175,16 @@ class AIService:
         
         # Call the AI model to regenerate the question
         try:
-            response = await AIService._call_openai(custom_prompt)
+            response = await cls._call_openai(custom_prompt)
             
             # Parse the response
-            questions = AIService._parse_questions(response)
+            questions = cls._parse_questions(response)
             
             if not questions:
                 # If parsing failed, retry with an explicit format reminder
                 retry_prompt = custom_prompt + "\n\nPlease provide exactly 1 question in valid JSON format with fields: question_type, question_text, options, correct_answer, and explanation."
-                response = await AIService._call_openai(retry_prompt)
-                questions = AIService._parse_questions(response)
+                response = await cls._call_openai(retry_prompt)
+                questions = cls._parse_questions(response)
             
             if not questions:
                 raise ValueError("Failed to generate a valid question after multiple attempts")
@@ -191,22 +193,22 @@ class AIService:
             new_question = questions[0]
             
             # Validate the regenerated question
-            if not AIService._validate_question(new_question):
+            if not cls._validate_question(new_question):
                 raise ValueError("Generated question is invalid or incomplete")
             
             # Compute content hash
-            content_hash = AIService._compute_content_hash(new_question)
+            content_hash = cls._compute_content_hash(new_question)
             
             # Check for duplicates
             if questions_collection.find_one({"content_hash": content_hash, "_id": {"$ne": question_oid}}):
                 # If duplicate found, regenerate with diversity instruction
                 diversity_prompt = custom_prompt + "\n\nPlease provide a completely different question than previously generated ones."
-                response = await AIService._call_openai(diversity_prompt)
-                questions = AIService._parse_questions(response)
+                response = await cls._call_openai(diversity_prompt)
+                questions = cls._parse_questions(response)
                 
                 if questions:
                     new_question = questions[0]
-                    content_hash = AIService._compute_content_hash(new_question)
+                    content_hash = cls._compute_content_hash(new_question)
             
             # Update with metadata
             new_question.update({

@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV=/Users/jdsingh/Desktop/num8ers/numbers-question-generator/backend/venv
+VIRTUAL_ENV='/Volumes/SanDisk Portable SSD Media/macbook/Desktop/num8ers/numbers-question-generator/backend/venv'
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

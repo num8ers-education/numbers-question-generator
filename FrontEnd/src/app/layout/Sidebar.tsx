@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
   FileQuestion,
@@ -16,7 +16,6 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout } = useAuth();
 
   // Determine which menu items to show based on user role
@@ -39,7 +38,7 @@ const Sidebar = () => {
           href: "/questions",
         },
         { name: "Curricula", icon: <BookOpen size={20} />, href: "/curricula" },
-        { name: "Users", icon: <Users size={20} />, href: "/userPage" },
+        { name: "Users", icon: <Users size={20} />, href: "/users" },
         {
           name: "Analytics",
           icon: <BarChart3 size={20} />,
@@ -86,15 +85,12 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     logout();
-    router.push("/");
   };
 
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-4 border-b border-gray-200">
-        <Link href="/dashboard" className="font-bold text-xl">
-          Question Generator
-        </Link>
+        <h1 className="font-bold text-xl">Question Generator</h1>
       </div>
 
       {user && (
@@ -114,9 +110,7 @@ const Sidebar = () => {
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
           {menuItems.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname?.startsWith(item.href));
+            const isActive = pathname === item.href;
             return (
               <li key={item.name}>
                 <Link

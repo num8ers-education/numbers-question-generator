@@ -38,7 +38,7 @@ const Sidebar = () => {
           href: "/questions",
         },
         { name: "Curricula", icon: <BookOpen size={20} />, href: "/curricula" },
-        { name: "Users", icon: <Users size={20} />, href: "/users" },
+        { name: "Users", icon: <Users size={20} />, href: "/userPage" },
         {
           name: "Analytics",
           icon: <BarChart3 size={20} />,

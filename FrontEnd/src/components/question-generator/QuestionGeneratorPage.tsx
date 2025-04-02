@@ -106,9 +106,8 @@ export default function QuestionGeneratorPage() {
         const curriculum = await curriculumAPI.getCurriculum(curriculumId);
         
         // Get course details
-        const course = await curriculumAPI.getCourses(curriculumId).then(
-          courses => courses.find((c: any) => c.id === courseId)
-        );
+        const allCourses = await curriculumAPI.getCourses(); // No subject parameter
+        const course = allCourses.find((c: any) => c.id === courseId);
         
         // Get unit details
         const unit = await curriculumAPI.getUnits(courseId).then(

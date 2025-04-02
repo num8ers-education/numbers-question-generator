@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
   const teacherAdminPaths = [
     "/questions/create",
     "/curricula/create",
-    "/generate",
+  
   ];
 
   // Helper function to check if the path starts with any of the given prefixes

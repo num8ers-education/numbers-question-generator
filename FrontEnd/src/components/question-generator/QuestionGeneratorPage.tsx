@@ -16,6 +16,7 @@ import Link from "next/link";
 import { curriculumAPI, questionAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 // Static data for the dropdowns and options
 const questionTypes = [
   { id: "MCQ", name: "Multiple Choice (Single Answer)", icon: "📝" },

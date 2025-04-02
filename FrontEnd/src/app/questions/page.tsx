@@ -7,6 +7,8 @@ import { questionAPI, curriculumAPI } from "@/services/api";
 import { FileText, Filter, Search, Trash2, Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
+import { showToast } from "@/components/toast";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 // First, let's define interfaces for our data structures
 interface Question {
@@ -48,6 +50,8 @@ const QuestionsPage = () => {
   });
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
 
   // Add this function to handle the edit button click
 
@@ -86,16 +90,23 @@ const QuestionsPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this question?")) {
-      try {
-        await questionAPI.deleteQuestion(id);
-        setQuestions(questions.filter((q) => q.id !== id));
-        showToast.success("Question deleted successfully");
-      } catch (error) {
-        console.error("Error deleting question:", error);
-        alert("Failed to delete question");
-      }
+  const handleDeleteRequest = (id: string) => {
+    setQuestionToDelete(id);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!questionToDelete) return;
+
+    try {
+      await questionAPI.deleteQuestion(questionToDelete);
+      setQuestions(questions.filter((q) => q.id !== questionToDelete));
+      showToast.success("Question deleted successfully");
+    } catch (error) {
+      console.error("Error deleting question:", error);
+      showToast.error("Failed to delete question");
+    } finally {
+      setQuestionToDelete(null);
     }
   };
 
@@ -148,7 +159,7 @@ const QuestionsPage = () => {
             </button>
             <button
               className="p-1 text-gray-500 hover:text-red-500"
-              onClick={() => handleDelete(question.id)}
+              onClick={() => handleDeleteRequest(question.id)}
             >
               <Trash2 size={16} />
             </button>
@@ -339,6 +350,15 @@ const QuestionsPage = () => {
             </>
           )}
         </div>
+
+        <ConfirmationDialog
+          isOpen={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          onConfirm={handleDelete}
+          title="Delete Question"
+          message="Are you sure you want to delete this question? This action cannot be undone."
+          confirmText="Delete"
+        />
 
         {isEditModalOpen && editingQuestion && (
           <EditQuestionModal

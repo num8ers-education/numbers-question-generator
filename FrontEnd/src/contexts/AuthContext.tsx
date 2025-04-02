@@ -11,6 +11,7 @@ import React, {
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/services/api";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 type User = {
   id: string;
@@ -81,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       document.cookie = `token=${response.access_token}; path=/; max-age=86400`;
 
-      toast.success("Login successful!");
+      showToast.success("Login successful!");
 
       // Redirect based on role
       if (userData.role === "admin" || userData.role === "teacher") {
@@ -95,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         err.response?.data?.detail ||
           "Login failed. Please check your credentials."
       );
-      toast.error(
+      showToast.error(
         err.response?.data?.detail ||
           "Login failed. Please check your credentials."
       );
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     authAPI.logout();
     setUser(null);
-    toast.success("Logged out successfully");
+    showToast.success("Logged out successfully");
     router.push("/");
   };
 

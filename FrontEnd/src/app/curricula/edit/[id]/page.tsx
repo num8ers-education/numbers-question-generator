@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Layout from "@/app/layout/Layout";
 import EditCurriculumModal from "../../EditCurriculumModal";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 export default function EditCurriculumPage() {
   const params = useParams();
@@ -18,7 +19,7 @@ export default function EditCurriculumPage() {
   };
 
   const handleSuccess = () => {
-    toast.success("Curriculum updated successfully!");
+    showToast.success("Curriculum updated successfully!");
     router.push("/curricula");
   };
 

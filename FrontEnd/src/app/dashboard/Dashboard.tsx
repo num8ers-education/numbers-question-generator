@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { showToast } from "@/components/toast";
 
 interface DashboardStats {
   totalCurricula: number;
@@ -80,7 +81,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError("Failed to load dashboard data. Please try again.");
-      toast.error("Failed to load dashboard data");
+      showToast.error("Failed to load dashboard data");
     } finally {
       setIsLoading(false);
     }

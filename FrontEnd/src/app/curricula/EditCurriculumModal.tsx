@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { curriculumAPI } from "@/services/api";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 interface EditCurriculumModalProps {
   isOpen: boolean;
@@ -243,7 +244,7 @@ export default function EditCurriculumModal({
       await processHierarchyChanges();
 
       console.log("Curriculum hierarchy updated successfully!");
-      toast.success("Curriculum updated successfully!");
+      showToast.success("Curriculum updated successfully!");
 
       // Call the success callback if provided
       if (onSuccess) {
@@ -258,7 +259,7 @@ export default function EditCurriculumModal({
         err.response?.data?.detail ||
           "Failed to update curriculum. Please try again."
       );
-      toast.error("Failed to update curriculum. Please try again.");
+      showToast.error("Failed to update curriculum. Please try again.");
     } finally {
       setIsLoading(false);
     }

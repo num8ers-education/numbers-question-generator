@@ -6,6 +6,7 @@ import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,7 +30,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (!email || !password) {
-      toast.error("Please enter both email and password");
+      showToast.error("Please enter both email and password");
       return;
     }
 

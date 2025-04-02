@@ -16,6 +16,7 @@ import CurriculaGrid from "./CurriculaGrid";
 import { curriculumAPI } from "@/services/api";
 import Layout from "@/app/layout/Layout";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 export default function CurriculumsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function CurriculumsPage() {
     } catch (err) {
       console.error("Error fetching curricula:", err);
       setError("Failed to load curricula. Please try again later.");
-      toast.error("Failed to load curricula");
+      showToast.error("Failed to load curricula");
     } finally {
       setIsLoading(false);
     }
@@ -76,13 +77,13 @@ export default function CurriculumsPage() {
     if (window.confirm("Are you sure you want to delete this curriculum?")) {
       try {
         await curriculumAPI.deleteCurriculum(id);
-        toast.success("Curriculum deleted successfully");
+        showToast.success("Curriculum deleted successfully");
 
         // Refresh the list
         setRefreshTrigger((prev) => prev + 1);
       } catch (err) {
         console.error("Error deleting curriculum:", err);
-        toast.error("Failed to delete curriculum");
+        showToast.error("Failed to delete curriculum");
       }
     }
   };
@@ -90,7 +91,7 @@ export default function CurriculumsPage() {
   const handleAddCurriculumSuccess = (newCurriculum: any) => {
     // Trigger a refresh to update the curriculum list
     setRefreshTrigger((prev) => prev + 1);
-    toast.success("Curriculum added successfully!");
+    showToast.success("Curriculum added successfully!");
     
     // Close the modal
     setIsAddModalOpen(false);

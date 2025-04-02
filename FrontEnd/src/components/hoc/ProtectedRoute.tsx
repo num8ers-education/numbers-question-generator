@@ -4,7 +4,7 @@
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import toast from "react-hot-toast";
+import { showToast } from "../toast";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -21,7 +21,7 @@ const ProtectedRoute = ({
   useEffect(() => {
     // If authentication check is complete and user is not authenticated
     if (!isLoading && !isAuthenticated) {
-      toast.error("Please log in to access this page");
+      showToast.error("Please log in to access this page");
       router.push("/");
     }
 
@@ -33,7 +33,7 @@ const ProtectedRoute = ({
       allowedRoles.length > 0 &&
       !allowedRoles.includes(user.role)
     ) {
-      toast.error(
+      showToast.error(
         `Access denied. You don't have permission to view this page.`
       );
       router.push("/dashboard");

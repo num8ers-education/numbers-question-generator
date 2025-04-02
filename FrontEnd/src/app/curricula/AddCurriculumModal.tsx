@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { curriculumAPI } from "@/services/api";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 interface AddCurriculumModalProps {
   isOpen: boolean;
@@ -163,7 +164,7 @@ export default function AddCurriculumModal({
       }
 
       console.log("Curriculum hierarchy created successfully!");
-      toast.success("Curriculum created successfully!");
+      showToast.success("Curriculum created successfully!");
 
       // Call the success callback if provided
       if (onSuccess) {
@@ -199,7 +200,7 @@ export default function AddCurriculumModal({
         err.response?.data?.detail ||
           "Failed to create curriculum. Please try again."
       );
-      toast.error("Failed to create curriculum. Please try again.");
+      showToast.error("Failed to create curriculum. Please try again.");
     } finally {
       setIsLoading(false);
     }

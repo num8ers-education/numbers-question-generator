@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import CurriculumCard from "./CurriculumCard";
 import { curriculumAPI } from "@/services/api";
 import toast from "react-hot-toast";
+import { showToast } from "@/components/toast";
 
 // Define types for curriculum data
 interface Curriculum {
@@ -148,7 +149,7 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
     } catch (err) {
       console.error("Error fetching curricula:", err);
       setError("Failed to load curricula. Please try again later.");
-      toast.error("Failed to load curricula. Please try again.");
+      showToast.error("Failed to load curricula. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +176,7 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
       await curriculumAPI.deleteCurriculum(curriculumToDelete);
       
       // Show success message
-      toast.success("Curriculum deleted successfully");
+      showToast.success("Curriculum deleted successfully");
       
       // Update the UI by removing the deleted curriculum
       setCurricula(curricula.filter((c) => c.id !== curriculumToDelete));
@@ -184,7 +185,7 @@ const CurriculaGrid = ({ limit, refreshTrigger, onRefreshNeeded }: CurriculaGrid
       if (onRefreshNeeded) onRefreshNeeded();
     } catch (err) {
       console.error("Error deleting curriculum:", err);
-      toast.error("Failed to delete curriculum");
+      showToast.error("Failed to delete curriculum");
     } finally {
       // Clear the deleting state
       setDeletingId(null);

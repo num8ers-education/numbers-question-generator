@@ -37,7 +37,10 @@ export default function EditQuestionModal({
     if (question) {
       setQuestionText(question.question_text || "");
       setOptions(question.options || []);
-      setCorrectAnswer(question.correct_answer || "");
+      setCorrectAnswer(
+        question.correct_answer ||
+          (question.question_type === "MultipleAnswer" ? [] : "")
+      );
       setExplanation(question.explanation || "");
       setDifficulty(question.difficulty || "Medium");
       setQuestionType(question.question_type || "MCQ");
@@ -63,6 +66,7 @@ export default function EditQuestionModal({
         explanation: explanation,
         difficulty: difficulty,
         question_type: questionType,
+        topic_id: question.topic_id, // Make sure to include topic_id
       };
 
       // Only include options and correct_answer for non-written answer types

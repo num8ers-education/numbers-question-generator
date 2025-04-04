@@ -96,6 +96,12 @@ class AIService:
             for q in questions[:request.num_questions]:  # Limit to requested number
                 # Ensure question has all required fields
                 if cls._validate_question(q):
+                    # Check for ShortAnswer and LongAnswer types
+                    if q["question_type"] in ["ShortAnswer", "LongAnswer"]:
+                        # Ensure these types have empty options and null correct_answer
+                        q["options"] = []
+                        q["correct_answer"] = None
+                    
                     # Compute content hash to avoid duplicates
                     content_hash = cls._compute_content_hash(q)
                     
@@ -196,6 +202,12 @@ class AIService:
             if not cls._validate_question(new_question):
                 raise ValueError("Generated question is invalid or incomplete")
             
+            # Check for ShortAnswer and LongAnswer types
+            if new_question["question_type"] in ["ShortAnswer", "LongAnswer"]:
+                # Ensure these types have empty options and null correct_answer
+                new_question["options"] = []
+                new_question["correct_answer"] = None
+            
             # Compute content hash
             content_hash = cls._compute_content_hash(new_question)
             
@@ -266,18 +278,33 @@ class AIService:
             # Set the API key directly
             openai.api_key = openai_api_key
             
-            # Make the API call using the older style OpenAI API
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",  # Or any other appropriate model
-                messages=[
-                    {"role": "system", "content": "You are an expert in creating educational assessment questions."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=3000
-            )
-            
-            return response.choices[0].message['content']
+            # Make the API call using the newer style OpenAI API
+            try:
+                # Try the new client style first
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",  # Or any other appropriate model
+                    messages=[
+                        {"role": "system", "content": "You are an expert in creating educational assessment questions."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=3000
+                )
+                return response.choices[0].message.content
+            except (ImportError, AttributeError):
+                # Fall back to the older style OpenAI API
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o-mini",  # Or any other appropriate model
+                    messages=[
+                        {"role": "system", "content": "You are an expert in creating educational assessment questions."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=3000
+                )
+                return response.choices[0].message['content']
         except Exception as e:
             raise Exception(f"OpenAI API error: {str(e)}")
     
@@ -334,6 +361,7 @@ class AIService:
         valid_types = [qt for qt in QuestionType.__members__.values()]
         valid_type_values = [qt.value for qt in QuestionType.__members__.values()]
         
+        # Handle ShortAnswer and LongAnswer explicitly
         if question_type not in valid_type_values:
             # Try to fix common formatting issues
             if question_type.lower() == "mcq" or question_type.lower() == "multiple choice":
@@ -379,13 +407,17 @@ class AIService:
                         question["correct_answer"] = question["correct_answer"][0]
                     else:
                         return False
-        else:
+        elif question["question_type"] in ["ShortAnswer", "LongAnswer"]:
             # For short and long written answers, we don't require options or correct_answer
             # Just ensure they exist but can be empty
             if "options" not in question:
                 question["options"] = []
             if "correct_answer" not in question:
                 question["correct_answer"] = None
+            if "explanation" not in question:
+                return False
+        else:
+            # For other question types
             if "explanation" not in question:
                 return False
         
@@ -398,7 +430,8 @@ class AIService:
         content = (
             question.get("question_text", "") + 
             question.get("explanation", "") +
-            str(question.get("options", []))
+            str(question.get("options", [])) +
+            str(question.get("question_type", ""))
         )
         
         # Normalize text: lowercase, remove extra whitespace

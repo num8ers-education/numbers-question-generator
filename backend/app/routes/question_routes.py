@@ -48,6 +48,11 @@ async def create_question(question: QuestionCreate, token_data: TokenData = Depe
         "ai_generated": False
     }
     
+    # Handle ShortAnswer and LongAnswer question types
+    if question.question_type in [QuestionType.SHORT_ANSWER, QuestionType.LONG_ANSWER]:
+        question_data["options"] = []
+        question_data["correct_answer"] = None
+    
     result = questions_collection.insert_one(question_data)
     created_question = questions_collection.find_one({"_id": result.inserted_id})
     
@@ -123,6 +128,12 @@ async def update_question(
     
     # Prepare update data, excluding None values
     update_data = {k: v for k, v in question.dict().items() if v is not None}
+    
+    # Handle ShortAnswer and LongAnswer question types
+    if update_data.get("question_type") in ["ShortAnswer", "LongAnswer"]:
+        update_data["options"] = []
+        update_data["correct_answer"] = None
+    
     if update_data:
         update_data["updated_at"] = datetime.utcnow()
         
@@ -169,14 +180,14 @@ async def generate_questions(
             # Validate question types
             valid_question_types = []
             for qt in request.question_types:
-                # Handle special frontend-only types
-                if qt in ['ShortAnswer', 'LongAnswer']:
-                    qt = 'Fill-in-the-blank'
-                
                 # Check if valid type
                 try:
-                    valid_qt = QuestionType(qt)
-                    valid_question_types.append(valid_qt.value)
+                    # Handle special frontend-only types directly
+                    if qt in ['ShortAnswer', 'LongAnswer']:
+                        valid_question_types.append(qt)
+                    else:
+                        valid_qt = QuestionType(qt)
+                        valid_question_types.append(valid_qt.value)
                 except ValueError:
                     # If not valid, log and use a default type
                     print(f"Warning: Invalid question type '{qt}', using MCQ instead")

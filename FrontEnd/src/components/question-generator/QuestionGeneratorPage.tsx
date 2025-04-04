@@ -16,12 +16,15 @@ import Link from "next/link";
 import { curriculumAPI, questionAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 // Static data for the dropdowns and options
 const questionTypes = [
   { id: "MCQ", name: "Multiple Choice (Single Answer)", icon: "📝" },
   { id: "MultipleAnswer", name: "Multiple Answers", icon: "✅" },
   { id: "True/False", name: "True/False", icon: "⚖️" },
   { id: "Fill-in-the-blank", name: "Fill-in-the-blank", icon: "📝" },
+  { id: "ShortAnswer", name: "Short Written Answer", icon: "✏️" },
+  { id: "LongAnswer", name: "Long Written Answer", icon: "📄" },
 ];
 
 const difficultyLevels = [

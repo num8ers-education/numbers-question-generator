@@ -23,6 +23,8 @@ const questionTypes = [
   { id: "MultipleAnswer", name: "Multiple Answers", icon: "✅" },
   { id: "True/False", name: "True/False", icon: "⚖️" },
   { id: "Fill-in-the-blank", name: "Fill-in-the-blank", icon: "📝" },
+  { id: "ShortAnswer", name: "Short Written Answer", icon: "✏️" },
+  { id: "LongAnswer", name: "Long Written Answer", icon: "📄" },
 ];
 
 const difficultyLevels = [

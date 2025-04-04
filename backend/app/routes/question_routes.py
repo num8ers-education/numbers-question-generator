@@ -8,7 +8,7 @@ from app.config.db import questions_collection, topics_collection
 from app.models.question import (
     QuestionCreate, QuestionUpdate, QuestionOut, 
     QuestionGenerationRequest, QuestionRegenerationRequest,
-    QuestionBatchAction
+    QuestionBatchAction, QuestionType, DifficultyLevel
 )
 from app.models.user import TokenData
 from app.services.ai_service import AIService
@@ -164,6 +164,39 @@ async def generate_questions(
 ):
     """Generate questions using AI"""
     try:
+        # Additional validation and normalization of request data
+        try:
+            # Validate question types
+            valid_question_types = []
+            for qt in request.question_types:
+                # Handle special frontend-only types
+                if qt in ['ShortAnswer', 'LongAnswer']:
+                    qt = 'Fill-in-the-blank'
+                
+                # Check if valid type
+                try:
+                    valid_qt = QuestionType(qt)
+                    valid_question_types.append(valid_qt.value)
+                except ValueError:
+                    # If not valid, log and use a default type
+                    print(f"Warning: Invalid question type '{qt}', using MCQ instead")
+                    valid_question_types.append('MCQ')
+            
+            # Replace original question types with validated ones
+            request.question_types = valid_question_types
+            
+            # Validate difficulty
+            try:
+                valid_difficulty = DifficultyLevel(request.difficulty)
+            except ValueError:
+                # If not valid, default to Medium
+                print(f"Warning: Invalid difficulty '{request.difficulty}', using Medium instead")
+                request.difficulty = DifficultyLevel.MEDIUM.value
+                
+        except Exception as e:
+            # If validation fails, log but continue with default values
+            print(f"Error in request validation: {str(e)}")
+        
         # Generate questions using AI service
         generated_questions = await AIService.generate_questions(request, token_data.user_id)
         

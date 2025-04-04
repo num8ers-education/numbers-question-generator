@@ -18,7 +18,7 @@ interface Question {
   difficulty: string;
   ai_generated: boolean;
   options?: string[];
-  correct_answer?: string;
+  correct_answer?: string | string[];
   explanation?: string;
   topic?: {
     name: string;
@@ -107,15 +107,20 @@ const QuestionsPage = () => {
       showToast.error("Failed to delete question");
     } finally {
       setQuestionToDelete(null);
+      setConfirmDialogOpen(false); // Close the dialog after operation
     }
   };
 
   const renderQuestion = (question: Question) => {
+    // Check if it's a written answer type
+    const isWrittenAnswerType =
+      question.question_type === "ShortAnswer" ||
+      question.question_type === "LongAnswer";
+
     return (
       <div
         key={question.id}
-        className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm"
-      >
+        className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <span
@@ -127,9 +132,12 @@ const QuestionsPage = () => {
                   ? "bg-green-100 text-green-800"
                   : question.question_type === "True/False"
                   ? "bg-purple-100 text-purple-800"
-                  : "bg-yellow-100 text-yellow-800"
-              }`}
-            >
+                  : question.question_type === "Fill-in-the-blank"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : question.question_type === "ShortAnswer"
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-pink-100 text-pink-800" // LongAnswer
+              }`}>
               {question.question_type}
             </span>
             <span
@@ -140,8 +148,7 @@ const QuestionsPage = () => {
                   : question.difficulty === "Medium"
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-red-100 text-red-800"
-              }`}
-            >
+              }`}>
               {question.difficulty}
             </span>
             {question.ai_generated && (
@@ -153,14 +160,12 @@ const QuestionsPage = () => {
           <div className="flex gap-2">
             <button
               className="p-1 text-gray-500 hover:text-blue-500"
-              onClick={() => handleEdit(question)}
-            >
+              onClick={() => handleEdit(question)}>
               <Edit size={16} />
             </button>
             <button
               className="p-1 text-gray-500 hover:text-red-500"
-              onClick={() => handleDeleteRequest(question.id)}
-            >
+              onClick={() => handleDeleteRequest(question.id)}>
               <Trash2 size={16} />
             </button>
           </div>
@@ -170,24 +175,41 @@ const QuestionsPage = () => {
           {question.question_text}
         </h3>
 
-        {question.options && question.options.length > 0 && (
-          <div className="mb-3">
-            <p className="text-sm text-gray-600 mb-1">Options:</p>
-            <ul className="list-disc pl-5 text-sm text-gray-800">
-              {question.options.map((option, index) => (
-                <li
-                  key={index}
-                  className={
-                    option === question.correct_answer ? "font-medium" : ""
-                  }
-                >
-                  {option}{" "}
-                  {option === question.correct_answer && (
-                    <span className="text-green-600 text-xs">(Correct)</span>
-                  )}
-                </li>
-              ))}
-            </ul>
+        {!isWrittenAnswerType &&
+          question.options &&
+          question.options.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm text-gray-600 mb-1">Options:</p>
+              <ul className="list-disc pl-5 text-sm text-gray-800">
+                {question.options.map((option, index) => (
+                  <li
+                    key={index}
+                    className={
+                      option === question.correct_answer ||
+                      (Array.isArray(question.correct_answer) &&
+                        question.correct_answer.includes(option))
+                        ? "font-medium"
+                        : ""
+                    }>
+                    {option}{" "}
+                    {(option === question.correct_answer ||
+                      (Array.isArray(question.correct_answer) &&
+                        question.correct_answer.includes(option))) && (
+                      <span className="text-green-600 text-xs">(Correct)</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+        {isWrittenAnswerType && (
+          <div className="mb-3 bg-gray-50 p-3 rounded-md">
+            <p className="text-sm text-gray-600 mb-1">
+              {question.question_type === "ShortAnswer"
+                ? "This question requires a short written answer."
+                : "This question requires a detailed written response."}
+            </p>
           </div>
         )}
 
@@ -214,8 +236,7 @@ const QuestionsPage = () => {
           <h1 className="text-2xl font-bold">Questions</h1>
           <Link
             href="/generate"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2">
             <Plus size={16} />
             Generate Questions
           </Link>
@@ -235,8 +256,7 @@ const QuestionsPage = () => {
                 name="topic_id"
                 value={filters.topic_id}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-              >
+                className="w-full p-2 border border-gray-300 rounded-md text-sm">
                 <option value="">All Topics</option>
                 {topics.map((topic) => (
                   <option key={topic.id} value={topic.id}>
@@ -254,13 +274,14 @@ const QuestionsPage = () => {
                 name="question_type"
                 value={filters.question_type}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-              >
+                className="w-full p-2 border border-gray-300 rounded-md text-sm">
                 <option value="">All Types</option>
                 <option value="MCQ">Multiple Choice</option>
                 <option value="MultipleAnswer">Multiple Answer</option>
                 <option value="True/False">True/False</option>
                 <option value="Fill-in-the-blank">Fill in the Blank</option>
+                <option value="ShortAnswer">Short Written Answer</option>
+                <option value="LongAnswer">Long Written Answer</option>
               </select>
             </div>
 
@@ -272,8 +293,7 @@ const QuestionsPage = () => {
                 name="difficulty"
                 value={filters.difficulty}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-              >
+                className="w-full p-2 border border-gray-300 rounded-md text-sm">
                 <option value="">All Difficulties</option>
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
@@ -297,8 +317,7 @@ const QuestionsPage = () => {
                     ai_generated: value === "" ? undefined : value === "true",
                   }));
                 }}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-              >
+                className="w-full p-2 border border-gray-300 rounded-md text-sm">
                 <option value="">All Sources</option>
                 <option value="true">AI Generated</option>
                 <option value="false">Manually Created</option>
@@ -319,8 +338,7 @@ const QuestionsPage = () => {
               <p className="text-red-700">{error}</p>
               <button
                 className="mt-2 text-red-700 font-medium underline"
-                onClick={() => window.location.reload()}
-              >
+                onClick={() => window.location.reload()}>
                 Retry
               </button>
             </div>
@@ -335,8 +353,7 @@ const QuestionsPage = () => {
               </p>
               <Link
                 href="/generate"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-              >
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
                 <Plus size={16} />
                 Generate Questions
               </Link>

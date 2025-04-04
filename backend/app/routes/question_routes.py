@@ -8,7 +8,11 @@ from app.config.db import questions_collection, topics_collection
 from app.models.question import (
     QuestionCreate, QuestionUpdate, QuestionOut, 
     QuestionGenerationRequest, QuestionRegenerationRequest,
+<<<<<<< HEAD
     QuestionBatchAction, QuestionType, DifficultyLevel
+=======
+    QuestionBatchAction
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
 )
 from app.models.user import TokenData
 from app.services.ai_service import AIService
@@ -164,6 +168,7 @@ async def generate_questions(
 ):
     """Generate questions using AI"""
     try:
+<<<<<<< HEAD
         # Additional validation and normalization of request data
         try:
             # Validate question types
@@ -197,6 +202,8 @@ async def generate_questions(
             # If validation fails, log but continue with default values
             print(f"Error in request validation: {str(e)}")
         
+=======
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         # Generate questions using AI service
         generated_questions = await AIService.generate_questions(request, token_data.user_id)
         

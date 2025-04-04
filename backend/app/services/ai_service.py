@@ -57,8 +57,13 @@ class AIService:
         if not curriculum:
             raise ValueError(f"Curriculum with ID {subject['curriculum_id']} not found")
         
+<<<<<<< HEAD
         # Build question types string - Fixed here to use the string values directly
         question_types_str = ", ".join(request.question_types)
+=======
+        # Build question types string
+        question_types_str = ", ".join([qt.value for qt in request.question_types])
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         
         # Get prompt template - either default or custom
         prompt_template = await cls._get_prompt_template(request.custom_prompt)
@@ -73,7 +78,11 @@ class AIService:
             subject=subject["name"],
             curriculum=curriculum["name"],
             question_types=question_types_str,
+<<<<<<< HEAD
             difficulty=request.difficulty
+=======
+            difficulty=request.difficulty.value
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         )
         
         # Call the AI model to generate questions
@@ -103,7 +112,11 @@ class AIService:
                     formatted_question = {
                         **q,
                         "topic_id": topic_id,
+<<<<<<< HEAD
                         "difficulty": q.get("difficulty", request.difficulty),
+=======
+                        "difficulty": q.get("difficulty", request.difficulty.value),
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                         "created_by": user_id,
                         "created_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
@@ -251,9 +264,13 @@ class AIService:
 - Format: JSON array with each question having: question_type, question_text, options, correct_answer, and explanation.
 - For MCQ (Multiple Choice Questions), ALWAYS provide exactly 4 options with exactly one correct answer.
 - For MultipleAnswer questions, provide 4-5 options with 2-3 correct answers as an array.
+<<<<<<< HEAD
 - For True/False questions, provide the options ["True", "False"] and the correct answer as either "True" or "False".
 - For Fill-in-the-blank questions, provide the question with a blank (represented by ________) and a single correct answer.
 - For ShortAnswer and LongAnswer questions, provide just the question_text and explanation - no options or correct_answer needed.
+=======
+- For Fill-in-the-blank questions, provide the question with a blank (represented by ________) and a single correct answer.
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
 - Return ONLY the JSON array with no additional text."""
     
     @staticmethod
@@ -318,6 +335,11 @@ class AIService:
     @staticmethod
     def _validate_question(question: Dict[str, Any]) -> bool:
         """Validate that a question has all required fields and correct format"""
+<<<<<<< HEAD
+=======
+        required_fields = ["question_type", "options", "correct_answer", "explanation"]
+        
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         # Check if question has question_text or question field
         if "question_text" not in question and "question" not in question:
             return False
@@ -326,6 +348,7 @@ class AIService:
         if "question" in question and "question_text" not in question:
             question["question_text"] = question.pop("question")
         
+<<<<<<< HEAD
         # Validate question_type
         if "question_type" not in question:
             return False
@@ -335,6 +358,17 @@ class AIService:
         valid_type_values = [qt.value for qt in QuestionType.__members__.values()]
         
         if question_type not in valid_type_values:
+=======
+        # Check all other required fields
+        for field in required_fields:
+            if field not in question:
+                return False
+        
+        # Validate question_type
+        question_type = question["question_type"]
+        valid_types = [qt.value for qt in QuestionType]
+        if question_type not in valid_types:
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
             # Try to fix common formatting issues
             if question_type.lower() == "mcq" or question_type.lower() == "multiple choice":
                 question["question_type"] = "MCQ"
@@ -344,6 +378,7 @@ class AIService:
                 question["question_type"] = "True/False"
             elif "fill" in question_type.lower() and "blank" in question_type.lower():
                 question["question_type"] = "Fill-in-the-blank"
+<<<<<<< HEAD
             elif "short" in question_type.lower() and "answer" in question_type.lower():
                 question["question_type"] = "ShortAnswer"
             elif "long" in question_type.lower() and "answer" in question_type.lower():
@@ -388,6 +423,33 @@ class AIService:
                 question["correct_answer"] = None
             if "explanation" not in question:
                 return False
+=======
+            else:
+                return False
+        
+        # Validate options
+        if not isinstance(question["options"], list):
+            return False
+            
+        # Validate correct_answer based on question_type
+        if question["question_type"] == "MultipleAnswer":
+            if not isinstance(question["correct_answer"], list):
+                # Try to convert string to list if it looks like a list representation
+                if isinstance(question["correct_answer"], str):
+                    try:
+                        question["correct_answer"] = json.loads(question["correct_answer"].replace("'", "\""))
+                    except:
+                        return False
+                else:
+                    return False
+        else:
+            if isinstance(question["correct_answer"], list):
+                # Convert list to string if it's a single-answer question type with one answer
+                if len(question["correct_answer"]) == 1:
+                    question["correct_answer"] = question["correct_answer"][0]
+                else:
+                    return False
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         
         return True
     
@@ -405,4 +467,8 @@ class AIService:
         normalized = " ".join(content.lower().split())
         
         # Compute hash
+<<<<<<< HEAD
         return hashlib.md5(normalized.encode('utf-8')).hexdigest()
+=======
+        return hashlib.md5(normalized.encode('utf-8')).hexdigest()
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3

@@ -8,8 +8,11 @@ class QuestionType(str, Enum):
     MULTIPLE_ANSWER = "MultipleAnswer"
     TRUE_FALSE = "True/False"
     FILL_IN_THE_BLANK = "Fill-in-the-blank"
+<<<<<<< HEAD
     SHORT_ANSWER = "ShortAnswer"
     LONG_ANSWER = "LongAnswer"
+=======
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
 
 class DifficultyLevel(str, Enum):
     EASY = "Easy"
@@ -20,8 +23,13 @@ class DifficultyLevel(str, Enum):
 class QuestionBase(BaseModel):
     question_text: str
     question_type: QuestionType
+<<<<<<< HEAD
     options: Optional[List[str]] = []  # Make options optional for written answers
     correct_answer: Optional[Union[str, List[str]]] = None  # Make correct_answer optional for written answers
+=======
+    options: List[str]
+    correct_answer: Union[str, List[str]]
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
     explanation: str
     difficulty: DifficultyLevel
     topic_id: str
@@ -65,8 +73,13 @@ class QuestionOut(QuestionBase):
 class QuestionGenerationRequest(BaseModel):
     topic_id: str
     num_questions: int = Field(5, ge=1, le=20)
+<<<<<<< HEAD
     question_types: List[str]  # Changed from List[QuestionType] to List[str]
     difficulty: str  # Changed from DifficultyLevel to str
+=======
+    question_types: List[QuestionType]
+    difficulty: DifficultyLevel
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
     custom_prompt: Optional[str] = None
 
 # Model for regeneration request

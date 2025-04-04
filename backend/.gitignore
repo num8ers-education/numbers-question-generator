@@ -1,4 +1,5 @@
 # Virtual Environment
+git rm --cached backend/.env
 venv/
 env/
 ENV/
@@ -7,4 +8,4 @@ ENV/
 env.bak/
 venv.bak/
 *.env
-git rm --cached backend/.env
+

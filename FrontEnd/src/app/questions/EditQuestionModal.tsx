@@ -2,7 +2,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { X, FileEdit, AlertCircle, Save, Trash2 } from "lucide-react";
+=======
+import {
+  X,
+  FileEdit,
+  AlertCircle,
+  Save,
+  Trash2,
+} from "lucide-react";
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
 import { questionAPI } from "@/services/api";
 import { showToast } from "@/components/toast";
 
@@ -17,21 +27,32 @@ export default function EditQuestionModal({
   isOpen,
   onClose,
   onSuccess,
+<<<<<<< HEAD
   question,
 }: EditQuestionModalProps) {
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string | string[]>("");
+=======
+  question
+}: EditQuestionModalProps) {
+  const [questionText, setQuestionText] = useState("");
+  const [options, setOptions] = useState<string[]>([]);
+  const [correctAnswer, setCorrectAnswer] = useState("");
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
   const [explanation, setExplanation] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [questionType, setQuestionType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+<<<<<<< HEAD
   // Is it a written answer type?
   const isWrittenAnswerType =
     questionType === "ShortAnswer" || questionType === "LongAnswer";
 
+=======
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
   // Initialize form with question data
   useEffect(() => {
     if (question) {
@@ -58,13 +79,21 @@ export default function EditQuestionModal({
       setError("");
 
       // Prepare data for API
+<<<<<<< HEAD
       const questionData: any = {
         question_text: questionText,
+=======
+      const questionData = {
+        question_text: questionText,
+        options: options,
+        correct_answer: correctAnswer,
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         explanation: explanation,
         difficulty: difficulty,
         question_type: questionType,
       };
 
+<<<<<<< HEAD
       // Only include options and correct_answer for non-written answer types
       if (!isWrittenAnswerType) {
         questionData.options = options;
@@ -78,6 +107,11 @@ export default function EditQuestionModal({
       // Update the question
       await questionAPI.updateQuestion(question.id, questionData);
 
+=======
+      // Update the question
+      await questionAPI.updateQuestion(question.id, questionData);
+      
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
       // Show success message
       showToast.success("Question updated successfully");
 
@@ -116,6 +150,7 @@ export default function EditQuestionModal({
     setOptions(newOptions);
   };
 
+<<<<<<< HEAD
   // Handle multiple answers selection
   const handleMultipleAnswerSelection = (option: string) => {
     if (questionType === "MultipleAnswer") {
@@ -132,6 +167,8 @@ export default function EditQuestionModal({
     }
   };
 
+=======
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
   if (!isOpen) return null;
 
   return (
@@ -143,7 +180,13 @@ export default function EditQuestionModal({
             <div className="bg-blue-50 p-3 rounded-xl mr-4">
               <FileEdit size={22} className="text-blue-600" />
             </div>
+<<<<<<< HEAD
             <h2 className="text-xl font-bold text-gray-800">Edit Question</h2>
+=======
+            <h2 className="text-xl font-bold text-gray-800">
+              Edit Question
+            </h2>
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
           </div>
           <button
             onClick={onClose}
@@ -155,10 +198,14 @@ export default function EditQuestionModal({
         <div className="overflow-y-auto flex-1 p-6">
           {error && (
             <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start">
+<<<<<<< HEAD
               <AlertCircle
                 size={20}
                 className="text-red-500 mr-3 mt-0.5 flex-shrink-0"
               />
+=======
+              <AlertCircle size={20} className="text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
               <p className="text-red-700">{error}</p>
             </div>
           )}
@@ -192,13 +239,21 @@ export default function EditQuestionModal({
                 value={questionType}
                 onChange={(e) => setQuestionType(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+<<<<<<< HEAD
                 required>
+=======
+                required
+              >
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                 <option value="MCQ">Multiple Choice</option>
                 <option value="MultipleAnswer">Multiple Answer</option>
                 <option value="True/False">True/False</option>
                 <option value="Fill-in-the-blank">Fill in the Blank</option>
+<<<<<<< HEAD
                 <option value="ShortAnswer">Short Written Answer</option>
                 <option value="LongAnswer">Long Written Answer</option>
+=======
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
               </select>
             </div>
 
@@ -214,13 +269,19 @@ export default function EditQuestionModal({
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+<<<<<<< HEAD
                 required>
+=======
+                required
+              >
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
                 <option value="Hard">Hard</option>
               </select>
             </div>
 
+<<<<<<< HEAD
             {/* Options - Only show for MCQ, MultipleAnswer, True/False and Fill-in-the-blank */}
             {!isWrittenAnswerType && (
               <div className="mb-4">
@@ -313,6 +374,51 @@ export default function EditQuestionModal({
                 )}
               </div>
             )}
+=======
+            {/* Options */}
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Answer Options
+                </label>
+                <button
+                  type="button"
+                  onClick={addOption}
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200"
+                >
+                  + Add Option
+                </button>
+              </div>
+              
+              {options.map((option, index) => (
+                <div key={index} className="flex items-center mb-2">
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(e) => handleOptionChange(index, e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={`Option ${index + 1}`}
+                  />
+                  <div className="ml-2 flex items-center">
+                    <input
+                      type="radio"
+                      checked={option === correctAnswer}
+                      onChange={() => setCorrectAnswer(option)}
+                      className="mr-1 h-4 w-4"
+                    />
+                    <label className="text-sm text-gray-600 mr-2">Correct</label>
+                    <button
+                      type="button"
+                      onClick={() => removeOption(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
 
             {/* Explanation */}
             <div className="mb-4">
@@ -402,4 +508,8 @@ export default function EditQuestionModal({
       `}</style>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3

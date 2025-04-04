@@ -6,3 +6,5 @@ ENV/
 .venv
 env.bak/
 venv.bak/
+*.env
+git rm --cached backend/.env

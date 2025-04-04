@@ -16,10 +16,6 @@ import Link from "next/link";
 import { curriculumAPI, questionAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
 // Static data for the dropdowns and options
 const questionTypes = [
   { id: "MCQ", name: "Multiple Choice (Single Answer)", icon: "📝" },
@@ -107,7 +103,6 @@ export default function QuestionGeneratorPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-<<<<<<< HEAD
 
         // Get curriculum details
         const curriculum = await curriculumAPI.getCurriculum(curriculumId);
@@ -125,25 +120,6 @@ export default function QuestionGeneratorPage() {
         const topicsData = await curriculumAPI.getTopics(unitId);
         setTopics(topicsData);
 
-=======
-        
-        // Get curriculum details
-        const curriculum = await curriculumAPI.getCurriculum(curriculumId);
-        
-        // Get course details
-        const allCourses = await curriculumAPI.getCourses(); // No subject parameter
-        const course = allCourses.find((c: any) => c.id === courseId);
-        
-        // Get unit details
-        const unit = await curriculumAPI.getUnits(courseId).then(
-          units => units.find((u: any) => u.id === unitId)
-        );
-        
-        // Get topics for this unit
-        const topicsData = await curriculumAPI.getTopics(unitId);
-        setTopics(topicsData);
-        
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         // Set the curriculum data
         setCurriculumData({
           curriculum: curriculum.name,
@@ -151,19 +127,11 @@ export default function QuestionGeneratorPage() {
           unit: unit ? unit.name : "Unknown Unit",
           topicId: topicsData.length > 0 ? topicsData[0].id : "",
         });
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
         // Set the first topic as selected
         if (topicsData.length > 0) {
           setSelectedTopic(topicsData[0].id);
         }
-<<<<<<< HEAD
-=======
-        
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
       } catch (err) {
         console.error("Error fetching curriculum data:", err);
         setError("Failed to load curriculum data. Please try again.");
@@ -171,22 +139,14 @@ export default function QuestionGeneratorPage() {
         setIsLoading(false);
       }
     };
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
     fetchData();
   }, [curriculumId, courseId, unitId]);
 
   // Handle form changes
-<<<<<<< HEAD
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-=======
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -214,7 +174,6 @@ export default function QuestionGeneratorPage() {
     setError(null);
 
     try {
-<<<<<<< HEAD
       // Prepare data for the API call - FIXED: ensure proper enum values are sent
       const generationData = {
         topic_id: selectedTopic,
@@ -233,28 +192,10 @@ export default function QuestionGeneratorPage() {
       // Store the generated questions
       setGeneratedQuestions(generatedData);
 
-=======
-      // Prepare data for the API call
-      const generationData = {
-        topic_id: selectedTopic,
-        num_questions: formData.numberOfQuestions,
-        question_types: [formData.questionType],
-        difficulty: formData.difficultyLevel,
-        custom_prompt: null // We could add this option in the future
-      };
-      
-      // Make the API call
-      const generatedData = await questionAPI.generateQuestions(generationData);
-      
-      // Store the generated questions
-      setGeneratedQuestions(generatedData);
-      
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
       // Set success state
       setIsGenerated(true);
     } catch (err: any) {
       console.error("Error generating questions:", err);
-<<<<<<< HEAD
 
       // Enhanced error handling to show more details
       if (err.response?.data) {
@@ -263,9 +204,6 @@ export default function QuestionGeneratorPage() {
       } else {
         setError("Failed to generate questions. Please try again.");
       }
-=======
-      setError(err.response?.data?.detail || "Failed to generate questions. Please try again.");
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
     } finally {
       setIsGenerating(false);
     }
@@ -306,12 +244,7 @@ export default function QuestionGeneratorPage() {
             <div className="flex items-center">
               <Link
                 href="/generate"
-<<<<<<< HEAD
                 className="mr-4 p-2 rounded-full hover:bg-blue-700 transition-all">
-=======
-                className="mr-4 p-2 rounded-full hover:bg-blue-700 transition-all"
-              >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <h1 className="text-xl font-bold">Question Generator</h1>
@@ -360,13 +293,9 @@ export default function QuestionGeneratorPage() {
               <form onSubmit={handleSubmit}>
                 {/* Topic Selection */}
                 <div className="mb-8">
-<<<<<<< HEAD
                   <label
                     htmlFor="topic"
                     className="block text-sm font-medium text-gray-700 mb-1">
-=======
-                  <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1">
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                     Topic
                   </label>
                   <select
@@ -374,12 +303,7 @@ export default function QuestionGeneratorPage() {
                     name="topic"
                     value={selectedTopic}
                     onChange={handleTopicChange}
-<<<<<<< HEAD
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-=======
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                     {topics.map((topic) => (
                       <option key={topic.id} value={topic.id}>
                         {topic.name}
@@ -408,12 +332,7 @@ export default function QuestionGeneratorPage() {
                             ...formData,
                             numberOfQuestions: number,
                           })
-<<<<<<< HEAD
                         }>
-=======
-                        }
-                      >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                         {number}
                       </button>
                     ))}
@@ -436,12 +355,7 @@ export default function QuestionGeneratorPage() {
                         }`}
                         onClick={() =>
                           handleCardSelection("questionType", type.id)
-<<<<<<< HEAD
                         }>
-=======
-                        }
-                      >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                         <div className="flex items-center">
                           <span className="mr-2 text-xl">{type.icon}</span>
                           <span className="text-sm font-medium">
@@ -477,12 +391,7 @@ export default function QuestionGeneratorPage() {
                         }`}
                         onClick={() =>
                           handleCardSelection("difficultyLevel", level.id)
-<<<<<<< HEAD
                         }>
-=======
-                        }
-                      >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                         <span className="font-medium">{level.name}</span>
                         {formData.difficultyLevel === level.id && (
                           <Check className="h-4 w-4 ml-2" />
@@ -496,12 +405,7 @@ export default function QuestionGeneratorPage() {
                 <div className="mb-8">
                   <label
                     htmlFor="questionSetName"
-<<<<<<< HEAD
                     className="block text-sm font-medium text-gray-700 mb-1">
-=======
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                     Question Set Name
                   </label>
                   <input
@@ -529,14 +433,9 @@ export default function QuestionGeneratorPage() {
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-blue-300"
                         }`}
-<<<<<<< HEAD
                         onClick={() =>
                           handleCardSelection("aiModel", model.id)
                         }>
-=======
-                        onClick={() => handleCardSelection("aiModel", model.id)}
-                      >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                         <div className="flex flex-col items-center justify-center">
                           <div className="mb-2">{model.icon}</div>
                           <span className="text-sm font-medium">
@@ -557,45 +456,25 @@ export default function QuestionGeneratorPage() {
                       isFormValid() && !isGenerating
                         ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                         : "bg-gray-400 cursor-not-allowed"
-<<<<<<< HEAD
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors`}>
-=======
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors`}
-                  >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                     {isGenerating ? (
                       <>
                         <svg
                           className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
-<<<<<<< HEAD
                           viewBox="0 0 24 24">
-=======
-                          viewBox="0 0 24 24"
-                        >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                           <circle
                             className="opacity-25"
                             cx="12"
                             cy="12"
                             r="10"
                             stroke="currentColor"
-<<<<<<< HEAD
                             strokeWidth="4"></circle>
                           <path
                             className="opacity-75"
                             fill="currentColor"
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-=======
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                         </svg>
                         Generating Questions...
                       </>
@@ -628,12 +507,7 @@ export default function QuestionGeneratorPage() {
                 <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3">
                   <button
                     className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-<<<<<<< HEAD
                     onClick={handleViewQuestions}>
-=======
-                    onClick={handleViewQuestions}
-                  >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                     View Questions
                   </button>
                   <button
@@ -646,12 +520,7 @@ export default function QuestionGeneratorPage() {
                         questionSetName: "",
                       });
                       setIsGenerated(false);
-<<<<<<< HEAD
                     }}>
-=======
-                    }}
-                  >
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3
                     Generate More
                   </button>
                 </div>
@@ -662,8 +531,4 @@ export default function QuestionGeneratorPage() {
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 4a8a3b288a98c6324908d8868ad934e90cb2fbb3

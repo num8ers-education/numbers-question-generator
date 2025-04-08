@@ -11,6 +11,7 @@ import {
   Sparkles,
   BookOpen,
   Users,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -44,6 +45,11 @@ const Sidebar = () => {
           icon: <BarChart3 size={20} />,
           href: "/analytics",
         },
+        {
+          name: "Prompts",
+          icon: <FileText size={20} />,
+          href: "/prompts",
+        },
         { name: "Settings", icon: <Settings size={20} />, href: "/settings" },
       ];
     } else if (user?.role === "teacher") {
@@ -63,6 +69,11 @@ const Sidebar = () => {
           name: "Analytics",
           icon: <BarChart3 size={20} />,
           href: "/analytics",
+        },
+        {
+          name: "Prompts",
+          icon: <FileText size={20} />,
+          href: "/prompts",
         },
         { name: "Settings", icon: <Settings size={20} />, href: "/settings" },
       ];

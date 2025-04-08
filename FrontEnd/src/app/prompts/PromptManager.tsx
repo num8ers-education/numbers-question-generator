@@ -9,7 +9,8 @@ import Link from "next/link";
 interface Prompt {
   id: string;
   name: string;
-  content: string;
+  template: string; // Changed from content to template to match API
+  description: string; // Added to match API
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -24,7 +25,8 @@ export default function PromptManager() {
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    content: "",
+    template: "", // Changed to match API
+    description: "", // Added to match API
   });
 
   // Fetch all prompts
@@ -60,51 +62,53 @@ export default function PromptManager() {
   const handleCreatePrompt = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.content.trim()) {
-      showToast.error("Name and content are required");
+    if (!formData.name.trim() || !formData.template.trim()) {
+      showToast.error("Name and template are required");
       return;
     }
-  
+
     try {
       setIsLoading(true);
       
-      // Log what we're sending to help debug
-      console.log("Sending prompt data:", {
+      // Create the request payload based on the API requirements
+      const promptPayload = {
         name: formData.name,
-        content: formData.content,
-      });
-      
-      // Make sure we're sending the exact structure the API expects
-      const promptData = {
-        name: formData.name,
-        content: formData.content,
-        // You might need additional fields based on the API requirements
-        // For example, if the API expects a template_type field:
-        // template_type: "question_generation"
+        description: formData.description || `Template for generating ${formData.name}`, // Add default if empty
+        template: formData.template, // Using template instead of content
+        is_default: false // Default to false for new prompts
       };
       
-      await promptAPI.createPrompt(promptData);
+      console.log("Sending prompt data:", promptPayload);
+      
+      await promptAPI.createPrompt(promptPayload);
       
       showToast.success("Prompt created successfully");
-      setFormData({ name: "", content: "" });
+      setFormData({ name: "", template: "", description: "" });
       setShowCreateForm(false);
       fetchPrompts();
     } catch (err) {
       console.error("Error creating prompt:", err);
       
-      // Enhanced error logging to see exactly what the server is returning
+      // Enhanced error handling
       if (err.response) {
-        console.error("Server response data:", err.response.data);
-        console.error("Server response status:", err.response.status);
+        const errorData = err.response.data;
+        console.error("API Error Response:", errorData);
         
-        // Show a more descriptive error message if available
-        if (err.response.data && err.response.data.detail) {
-          showToast.error(`Error: ${err.response.data.detail}`);
-        } else {
-          showToast.error("Failed to create prompt: Invalid data");
+        // Try to extract a meaningful error message
+        let errorMessage = "Failed to create prompt";
+        if (errorData?.detail) {
+          errorMessage = typeof errorData.detail === 'string' 
+            ? errorData.detail 
+            : JSON.stringify(errorData.detail);
+        } else if (errorData?.message) {
+          errorMessage = errorData.message;
         }
+        
+        setError(errorMessage);
+        showToast.error(errorMessage);
       } else {
-        showToast.error("Failed to create prompt");
+        setError("Network error. Please check your connection and try again.");
+        showToast.error("Network error");
       }
     } finally {
       setIsLoading(false);
@@ -152,7 +156,8 @@ export default function PromptManager() {
   // Toggle create form visibility
   const toggleCreateForm = () => {
     setShowCreateForm(!showCreateForm);
-    setFormData({ name: "", content: "" });
+    setFormData({ name: "", template: "", description: "" });
+    setError(null);
   };
 
   if (isLoading && prompts.length === 0) {
@@ -228,14 +233,30 @@ export default function PromptManager() {
                 required
               />
             </div>
+            
             <div className="mb-4">
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                Prompt Content
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <input
+                type="text"
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Template optimized for generating math questions"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-1">
+                Prompt Template
               </label>
               <textarea
-                id="content"
-                name="content"
-                value={formData.content}
+                id="template"
+                name="template"
+                value={formData.template}
                 onChange={handleChange}
                 rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -314,9 +335,12 @@ export default function PromptManager() {
                     )}
                   </h3>
                 </div>
+                {prompt.description && (
+                  <p className="text-sm text-gray-600 mb-2">{prompt.description}</p>
+                )}
                 <div className="bg-gray-50 p-3 rounded-md mb-4 h-24 overflow-y-auto">
                   <pre className="text-xs text-gray-600 whitespace-pre-wrap">
-                    {truncateText(prompt.content, 300)}
+                    {truncateText(prompt.template, 300)}
                   </pre>
                 </div>
                 <div className="flex items-center justify-between">

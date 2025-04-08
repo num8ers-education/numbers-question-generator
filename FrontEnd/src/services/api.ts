@@ -611,6 +611,22 @@ export const promptAPI = {
       throw error;
     }
   },
+  updatePrompt: async (promptId: string, promptData: any) => {
+    try {
+      const response = await apiClient.put(`/prompts/${promptId}`, promptData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deletePrompt: async (promptId: string) => {
+    try {
+      const response = await apiClient.delete(`/prompts/${promptId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
   setDefaultPrompt: async (promptId: string) => {
     try {
       const response = await apiClient.post(`/prompts/${promptId}/set-default`);

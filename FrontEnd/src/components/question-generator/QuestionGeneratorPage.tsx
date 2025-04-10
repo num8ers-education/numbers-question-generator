@@ -16,6 +16,16 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  CircleCheck,
+  CheckSquare,
+  ToggleLeft,
+  TextCursor,
+  PenLine,
+  Eye,
+  CornerDownRight,
+  ThumbsUp,
+  ChevronDown as ChevronDownIcon,
+  ChevronUp as ChevronUpIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { curriculumAPI, questionAPI, promptAPI } from "@/services/api";
@@ -110,6 +120,9 @@ export default function QuestionGeneratorPage() {
   const [isGenerated, setIsGenerated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+  
+  // New state for expanded questions
+  const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
 
   // Fetch curriculum data on load
   useEffect(() => {
@@ -225,6 +238,14 @@ export default function QuestionGeneratorPage() {
     setIsPromptSectionExpanded(!isPromptSectionExpanded);
   };
 
+  // Toggle question expansion
+  const toggleQuestionExpansion = (questionId: string) => {
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId]
+    }));
+  };
+
   // Handle selection of cards (for question type, difficulty, AI model)
   const handleCardSelection = (field: string, value: string) => {
     setFormData({
@@ -232,6 +253,18 @@ export default function QuestionGeneratorPage() {
       [field]: value,
     });
   };
+
+  // Initialize expanded state after questions are generated
+  useEffect(() => {
+    if (generatedQuestions.length > 0) {
+      const initialExpandedState: Record<string, boolean> = {};
+      // Expand the first question by default
+      if (generatedQuestions[0]) {
+        initialExpandedState[generatedQuestions[0].id] = true;
+      }
+      setExpandedQuestions(initialExpandedState);
+    }
+  }, [generatedQuestions]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -302,6 +335,168 @@ export default function QuestionGeneratorPage() {
   const handleViewQuestions = () => {
     // In a real app, you'd navigate to a page to view the questions
     router.push("/questions");
+  };
+
+  // Render a question card
+  const renderQuestionCard = (question: any, index: number) => {
+    const isExpanded = expandedQuestions[question.id] || false;
+    const isWrittenAnswerType = 
+      question.question_type === "ShortAnswer" || 
+      question.question_type === "LongAnswer";
+
+    return (
+      <div 
+        key={question.id} 
+        className="border border-gray-200 rounded-lg mb-4 shadow-sm overflow-hidden bg-white"
+      >
+        {/* Question header */}
+        <div 
+          className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-start cursor-pointer"
+          onClick={() => toggleQuestionExpansion(question.id)}
+        >
+          <div className="flex items-start">
+            <div className="flex-shrink-0 h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-semibold mr-3">
+              {index + 1}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-900 pr-8">{question.question_text}</h3>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {/* Question Type Badge */}
+                <div className={`inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-medium
+                  ${
+                    question.question_type === "MCQ"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : question.question_type === "MultipleAnswer"
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : question.question_type === "True/False"
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : question.question_type === "Fill-in-the-blank"
+                      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                      : question.question_type === "ShortAnswer"
+                      ? "bg-orange-50 text-orange-700 border-orange-200"
+                      : "bg-pink-50 text-pink-700 border-pink-200" // LongAnswer
+                  }`}
+                >
+                  {/* Type-specific icon */}
+                  {question.question_type === "MCQ" && (
+                    <CircleCheck size={12} className="mr-1" />
+                  )}
+                  {question.question_type === "MultipleAnswer" && (
+                    <CheckSquare size={12} className="mr-1" />
+                  )}
+                  {question.question_type === "True/False" && (
+                    <ToggleLeft size={12} className="mr-1" />
+                  )}
+                  {question.question_type === "Fill-in-the-blank" && (
+                    <TextCursor size={12} className="mr-1" />
+                  )}
+                  {question.question_type === "ShortAnswer" && (
+                    <PenLine size={12} className="mr-1" />
+                  )}
+                  {question.question_type === "LongAnswer" && (
+                    <FileText size={12} className="mr-1" />
+                  )}
+
+                  {/* Format question type text */}
+                  <span>
+                    {question.question_type === "MCQ"
+                      ? "Multiple Choice"
+                      : question.question_type === "MultipleAnswer"
+                      ? "Multiple Answers"
+                      : question.question_type === "True/False"
+                      ? "True/False"
+                      : question.question_type === "Fill-in-the-blank"
+                      ? "Fill-in-blank"
+                      : question.question_type === "ShortAnswer"
+                      ? "Short Answer"
+                      : "Long Answer"}
+                  </span>
+                </div>
+
+                {/* Difficulty Badge */}
+                <div
+                  className={`inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-medium
+                    ${
+                      question.difficulty === "Easy"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : question.difficulty === "Medium"
+                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                        : "bg-red-50 text-red-700 border-red-200"
+                    }`}
+                >
+                  <ThumbsUp size={12} className="mr-1" />
+                  <span>{question.difficulty}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="text-gray-500">
+            {isExpanded ? 
+              <ChevronUpIcon size={20} /> : 
+              <ChevronDownIcon size={20} />
+            }
+          </div>
+        </div>
+
+        {/* Question details - only shown when expanded */}
+        {isExpanded && (
+          <div className="p-4 border-t border-gray-200">
+            {!isWrittenAnswerType && question.options && question.options.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Answer Options:</h4>
+                <ul className="space-y-2">
+                  {question.options.map((option: string, optionIndex: number) => {
+                    const isCorrect = option === question.correct_answer || 
+                      (Array.isArray(question.correct_answer) && 
+                       question.correct_answer.includes(option));
+                    
+                    return (
+                      <li 
+                        key={optionIndex}
+                        className={`flex items-start p-2 rounded-md ${
+                          isCorrect ? 'bg-green-50' : 'bg-gray-50'
+                        }`}
+                      >
+                        <div className="mr-2 mt-0.5">
+                          <CornerDownRight size={14} className={`${isCorrect ? 'text-green-600' : 'text-gray-400'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <p className={`text-sm ${isCorrect ? 'font-medium text-green-800' : 'text-gray-800'}`}>
+                            {option}
+                            {isCorrect && (
+                              <span className="ml-2 text-xs inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                                <Check size={10} className="mr-1" />
+                                Correct
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+            
+            {isWrittenAnswerType && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <p className="text-sm text-gray-600">
+                  This is a {question.question_type === "ShortAnswer" ? "short" : "long"} written response question. 
+                  Students will need to write their answers.
+                </p>
+              </div>
+            )}
+            
+            {question.explanation && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Explanation:</h4>
+                <p className="text-sm text-gray-600">{question.explanation}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -651,40 +846,56 @@ export default function QuestionGeneratorPage() {
             </div>
           </div>
         ) : (
-          /* Success state after questions are generated */
+          /* Success state after questions are generated - now shows the questions */
           <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
             <div className="p-6">
-              <div className="text-center py-8">
+              <div className="text-center mb-6">
                 <div className="bg-green-100 p-3 rounded-full inline-flex items-center justify-center mb-4">
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Questions Generated!
                 </h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-4">
                   Your {formData.numberOfQuestions} {formData.difficultyLevel}{" "}
-                  questions have been created successfully.
+                  questions for <span className="font-semibold">{formData.questionSetName}</span> have been created successfully.
                 </p>
-                <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3">
-                  <button
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    onClick={handleViewQuestions}>
-                    View Questions
-                  </button>
-                  <button
-                    className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        questionType: "",
-                        difficultyLevel: "",
-                        questionSetName: "",
-                      });
-                      setIsGenerated(false);
-                    }}>
-                    Generate More
-                  </button>
+              </div>
+              
+              {/* Generated Questions Preview */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Eye className="h-5 w-5 mr-2 text-blue-600" />
+                  Question Preview
+                </h3>
+                <div className="space-y-4">
+                  {generatedQuestions.map((question, index) => 
+                    renderQuestionCard(question, index)
+                  )}
                 </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3 border-t border-gray-200 pt-6">
+                <button
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  onClick={handleViewQuestions}>
+                  View in Question Bank
+                </button>
+                <button
+                  className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      questionType: "",
+                      difficultyLevel: "",
+                      questionSetName: "",
+                    });
+                    setIsGenerated(false);
+                    setGeneratedQuestions([]);
+                  }}>
+                  Generate More Questions
+                </button>
               </div>
             </div>
           </div>

@@ -4,12 +4,15 @@
 import { useState, useEffect } from "react";
 import Layout from "@/app/layout/Layout";
 import { questionAPI, curriculumAPI,topicAPI,unitAPI,courseAPI,subjectAPI} from "@/services/api";
-import { FileText, Filter, Search, Trash2, Edit, Plus } from "lucide-react";
+import { 
+  FileText, Filter, Search, Trash2, Edit, Plus, ChevronRight, 
+  BookOpen, Layers, BookmarkIcon, GraduationCap, BookText, ListChecks 
+} from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
-import { ChevronRight } from "lucide-react";
+
 
 // First, let's define interfaces for our data structures
 interface Question {
@@ -490,37 +493,51 @@ const QuestionsPage = () => {
 
         {/* Full hierarchy path */}
         {hierarchy && (
-          <div className="mt-3 pt-3 border-t border-gray-100 text-xs">
-            <div className="flex flex-wrap items-center text-gray-500">
-              <span className="font-medium mr-1">Path:</span>
-              <div className="flex items-center flex-wrap">
-                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded mr-1 mb-1">
-                  {hierarchy.curriculum}
-                </span>
-                <ChevronRight size={12} className="text-gray-400 mr-1" />
-
-                <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded mr-1 mb-1">
-                  {hierarchy.subject}
-                </span>
-                <ChevronRight size={12} className="text-gray-400 mr-1" />
-
-                <span className="bg-green-50 text-green-700 px-2 py-1 rounded mr-1 mb-1">
-                  {hierarchy.course}
-                </span>
-                <ChevronRight size={12} className="text-gray-400 mr-1" />
-
-                <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded mr-1 mb-1">
-                  {hierarchy.unit}
-                </span>
-                <ChevronRight size={12} className="text-gray-400 mr-1" />
-
-                <span className="bg-red-50 text-red-700 px-2 py-1 rounded mb-1">
-                  {hierarchy.topic}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+  <div className="mt-4 pt-4 border-t border-gray-100">
+    <div className="flex flex-col">
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-blue-50 border border-blue-100 shadow-sm">
+          <Layers size={12} className="mr-1.5 text-blue-600" />
+          <span className="text-xs font-medium text-blue-700 whitespace-nowrap">
+            Curriculum: {hierarchy.curriculum}
+          </span>
+        </div>
+        <ChevronRight size={14} className="text-gray-400" />
+        
+        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-purple-50 border border-purple-100 shadow-sm">
+          <BookmarkIcon size={12} className="mr-1.5 text-purple-600" />
+          <span className="text-xs font-medium text-purple-700 whitespace-nowrap">
+            Subject: {hierarchy.subject}
+          </span>
+        </div>
+        <ChevronRight size={14} className="text-gray-400" />
+        
+        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-green-50 border border-green-100 shadow-sm">
+          <GraduationCap size={12} className="mr-1.5 text-green-600" />
+          <span className="text-xs font-medium text-green-700 whitespace-nowrap">
+            Course: {hierarchy.course}
+          </span>
+        </div>
+        <ChevronRight size={14} className="text-gray-400" />
+        
+        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-yellow-50 border border-yellow-100 shadow-sm">
+          <BookText size={12} className="mr-1.5 text-yellow-600" />
+          <span className="text-xs font-medium text-yellow-700 whitespace-nowrap">
+            Unit: {hierarchy.unit}
+          </span>
+        </div>
+        <ChevronRight size={14} className="text-gray-400" />
+        
+        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-red-50 border border-red-100 shadow-sm">
+          <ListChecks size={12} className="mr-1.5 text-red-600" />
+          <span className="text-xs font-medium text-red-700 whitespace-nowrap">
+            Topic: {hierarchy.topic}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
       </div>
     );
   };

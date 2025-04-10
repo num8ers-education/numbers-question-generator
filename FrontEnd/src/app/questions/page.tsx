@@ -3,16 +3,42 @@
 
 import { useState, useEffect } from "react";
 import Layout from "@/app/layout/Layout";
-import { questionAPI, curriculumAPI,topicAPI,unitAPI,courseAPI,subjectAPI} from "@/services/api";
-import { 
-  FileText, Filter, Search, Trash2, Edit, Plus, ChevronRight, 
-  BookOpen, Layers, BookmarkIcon, GraduationCap, BookText, ListChecks 
+import {
+  questionAPI,
+  curriculumAPI,
+  topicAPI,
+  unitAPI,
+  courseAPI,
+  subjectAPI,
+} from "@/services/api";
+import {
+  FileText,
+  Filter,
+  Search,
+  Trash2,
+  Edit,
+  Plus,
+  ChevronRight,
+  BookOpen,
+  Layers,
+  BookmarkIcon,
+  GraduationCap,
+  BookText,
+  ListChecks,
+  CircleCheck,
+  CheckSquare,
+  ToggleLeft,
+  TextCursor,
+  PenLine,
+  ThumbsUp,
+  Activity,
+  Zap,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
-
 
 // First, let's define interfaces for our data structures
 interface Question {
@@ -381,41 +407,91 @@ const QuestionsPage = () => {
         className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm"
       >
         <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full
-              ${
-                question.question_type === "MCQ"
-                  ? "bg-blue-100 text-blue-800"
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            {/* Question Type with formatting fix and icons */}
+            <div
+              className={`inline-flex items-center px-3 py-1.5 rounded-md border shadow-sm
+    ${
+      question.question_type === "MCQ"
+        ? "bg-blue-50 text-blue-700 border-blue-200"
+        : question.question_type === "MultipleAnswer"
+        ? "bg-green-50 text-green-700 border-green-200"
+        : question.question_type === "True/False"
+        ? "bg-purple-50 text-purple-700 border-purple-200"
+        : question.question_type === "Fill-in-the-blank"
+        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+        : question.question_type === "ShortAnswer"
+        ? "bg-orange-50 text-orange-700 border-orange-200"
+        : "bg-pink-50 text-pink-700 border-pink-200" // LongAnswer
+    }`}
+            >
+              {/* Type-specific icon */}
+              {question.question_type === "MCQ" && (
+                <CircleCheck size={14} className="mr-1.5" />
+              )}
+              {question.question_type === "MultipleAnswer" && (
+                <CheckSquare size={14} className="mr-1.5" />
+              )}
+              {question.question_type === "True/False" && (
+                <ToggleLeft size={14} className="mr-1.5" />
+              )}
+              {question.question_type === "Fill-in-the-blank" && (
+                <TextCursor size={14} className="mr-1.5" />
+              )}
+              {question.question_type === "ShortAnswer" && (
+                <PenLine size={14} className="mr-1.5" />
+              )}
+              {question.question_type === "LongAnswer" && (
+                <FileText size={14} className="mr-1.5" />
+              )}
+
+              {/* Format question type text */}
+              <span className="text-xs font-medium">
+                {question.question_type === "MCQ"
+                  ? "Multiple Choice"
                   : question.question_type === "MultipleAnswer"
-                  ? "bg-green-100 text-green-800"
+                  ? "Multiple Answer"
                   : question.question_type === "True/False"
-                  ? "bg-purple-100 text-purple-800"
+                  ? "True/False"
                   : question.question_type === "Fill-in-the-blank"
-                  ? "bg-yellow-100 text-yellow-800"
+                  ? "Fill in the Blank"
                   : question.question_type === "ShortAnswer"
-                  ? "bg-orange-100 text-orange-800"
-                  : "bg-pink-100 text-pink-800" // LongAnswer
-              }`}
-            >
-              {question.question_type}
-            </span>
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full
-              ${
-                question.difficulty === "Easy"
-                  ? "bg-green-100 text-green-800"
-                  : question.difficulty === "Medium"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {question.difficulty}
-            </span>
-            {question.ai_generated && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                AI Generated
+                  ? "Short Answer"
+                  : question.question_type === "LongAnswer"
+                  ? "Long Answer"
+                  : question.question_type}
               </span>
+            </div>
+
+            {/* Difficulty label with icon */}
+            <div
+              className={`inline-flex items-center px-3 py-1.5 rounded-md border shadow-sm
+    ${
+      question.difficulty === "Easy"
+        ? "bg-green-50 text-green-700 border-green-200"
+        : question.difficulty === "Medium"
+        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+        : "bg-red-50 text-red-700 border-red-200"
+    }`}
+            >
+              {question.difficulty === "Easy" && (
+                <ThumbsUp size={14} className="mr-1.5" />
+              )}
+              {question.difficulty === "Medium" && (
+                <Activity size={14} className="mr-1.5" />
+              )}
+              {question.difficulty === "Hard" && (
+                <Zap size={14} className="mr-1.5" />
+              )}
+              <span className="text-xs font-medium">{question.difficulty}</span>
+            </div>
+
+            {/* AI Generated label with icon */}
+            {question.ai_generated && (
+              <div className="inline-flex items-center px-3 py-1.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
+                <Sparkles size={14} className="mr-1.5" />
+                <span className="text-xs font-medium">AI Generated</span>
+              </div>
             )}
           </div>
           <div className="flex gap-2">
@@ -493,51 +569,51 @@ const QuestionsPage = () => {
 
         {/* Full hierarchy path */}
         {hierarchy && (
-  <div className="mt-4 pt-4 border-t border-gray-100">
-    <div className="flex flex-col">
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-blue-50 border border-blue-100 shadow-sm">
-          <Layers size={12} className="mr-1.5 text-blue-600" />
-          <span className="text-xs font-medium text-blue-700 whitespace-nowrap">
-            Curriculum: {hierarchy.curriculum}
-          </span>
-        </div>
-        <ChevronRight size={14} className="text-gray-400" />
-        
-        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-purple-50 border border-purple-100 shadow-sm">
-          <BookmarkIcon size={12} className="mr-1.5 text-purple-600" />
-          <span className="text-xs font-medium text-purple-700 whitespace-nowrap">
-            Subject: {hierarchy.subject}
-          </span>
-        </div>
-        <ChevronRight size={14} className="text-gray-400" />
-        
-        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-green-50 border border-green-100 shadow-sm">
-          <GraduationCap size={12} className="mr-1.5 text-green-600" />
-          <span className="text-xs font-medium text-green-700 whitespace-nowrap">
-            Course: {hierarchy.course}
-          </span>
-        </div>
-        <ChevronRight size={14} className="text-gray-400" />
-        
-        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-yellow-50 border border-yellow-100 shadow-sm">
-          <BookText size={12} className="mr-1.5 text-yellow-600" />
-          <span className="text-xs font-medium text-yellow-700 whitespace-nowrap">
-            Unit: {hierarchy.unit}
-          </span>
-        </div>
-        <ChevronRight size={14} className="text-gray-400" />
-        
-        <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-red-50 border border-red-100 shadow-sm">
-          <ListChecks size={12} className="mr-1.5 text-red-600" />
-          <span className="text-xs font-medium text-red-700 whitespace-nowrap">
-            Topic: {hierarchy.topic}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-col">
+              <div className="flex flex-wrap gap-2 items-center">
+                <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-blue-50 border border-blue-100 shadow-sm">
+                  <Layers size={12} className="mr-1.5 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-700 whitespace-nowrap">
+                    Curriculum: {hierarchy.curriculum}
+                  </span>
+                </div>
+                <ChevronRight size={14} className="text-gray-400" />
+
+                <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-purple-50 border border-purple-100 shadow-sm">
+                  <BookmarkIcon size={12} className="mr-1.5 text-purple-600" />
+                  <span className="text-xs font-medium text-purple-700 whitespace-nowrap">
+                    Subject: {hierarchy.subject}
+                  </span>
+                </div>
+                <ChevronRight size={14} className="text-gray-400" />
+
+                <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-green-50 border border-green-100 shadow-sm">
+                  <GraduationCap size={12} className="mr-1.5 text-green-600" />
+                  <span className="text-xs font-medium text-green-700 whitespace-nowrap">
+                    Course: {hierarchy.course}
+                  </span>
+                </div>
+                <ChevronRight size={14} className="text-gray-400" />
+
+                <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-yellow-50 border border-yellow-100 shadow-sm">
+                  <BookText size={12} className="mr-1.5 text-yellow-600" />
+                  <span className="text-xs font-medium text-yellow-700 whitespace-nowrap">
+                    Unit: {hierarchy.unit}
+                  </span>
+                </div>
+                <ChevronRight size={14} className="text-gray-400" />
+
+                <div className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-red-50 border border-red-100 shadow-sm">
+                  <ListChecks size={12} className="mr-1.5 text-red-600" />
+                  <span className="text-xs font-medium text-red-700 whitespace-nowrap">
+                    Topic: {hierarchy.topic}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

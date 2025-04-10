@@ -42,6 +42,7 @@ import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import { MathJax } from "better-react-mathjax";
 
 // Updated interface to include created_at field
 interface Question {
@@ -575,7 +576,7 @@ const QuestionsPage = () => {
         </div>
 
         <h3 className="font-medium text-gray-900 mb-2">
-          {question.question_text}
+        <MathJax inline>{question.question_text}</MathJax>
         </h3>
 
         {!isWrittenAnswerType &&
@@ -620,7 +621,7 @@ const QuestionsPage = () => {
         <div className="text-sm text-gray-600">
           <p>
             <span className="font-medium">Explanation:</span>{" "}
-            {question.explanation}
+            <MathJax inline>{question.explanation}</MathJax>
           </p>
         </div>
 

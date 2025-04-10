@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Toaster } from "react-hot-toast";
+import ClientMathJaxWrapper from "./ClientMathJaxWrapper"; // Import the client component
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,19 +21,15 @@ export const metadata: Metadata = {
   description: "Generate high-quality educational questions using AI",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
         <Providers>
-          {children}
-          <Toaster position="top-right" />
+          <ClientMathJaxWrapper>
+            {children}
+            <Toaster position="top-right" />
+          </ClientMathJaxWrapper>
         </Providers>
       </body>
     </html>

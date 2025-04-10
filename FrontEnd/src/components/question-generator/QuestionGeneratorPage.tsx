@@ -11,9 +11,14 @@ import {
   Brain,
   Bot,
   BookText,
+  Edit,
+  AlertTriangle,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { curriculumAPI, questionAPI } from "@/services/api";
+import { curriculumAPI, questionAPI, promptAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Static data for the dropdowns and options
@@ -92,7 +97,15 @@ export default function QuestionGeneratorPage() {
     aiModel: "gpt4", // Default to GPT-4
   });
 
+  // Custom prompt state
+  const [useCustomPrompt, setUseCustomPrompt] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [savedPrompts, setSavedPrompts] = useState<any[]>([]);
+  const [selectedPromptId, setSelectedPromptId] = useState("");
+  const [isPromptSectionExpanded, setIsPromptSectionExpanded] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [isPromptLoading, setIsPromptLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,9 +156,32 @@ export default function QuestionGeneratorPage() {
     fetchData();
   }, [curriculumId, courseId, unitId]);
 
+  // Fetch saved prompts
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        setIsPromptLoading(true);
+        const promptsData = await promptAPI.getAllPrompts();
+        setSavedPrompts(promptsData);
+        
+        // Find and set the default prompt
+        const defaultPrompt = promptsData.find((p: any) => p.is_default);
+        if (defaultPrompt) {
+          setSelectedPromptId(defaultPrompt.id);
+        }
+      } catch (err) {
+        console.error("Error fetching prompts:", err);
+      } finally {
+        setIsPromptLoading(false);
+      }
+    };
+
+    fetchPrompts();
+  }, []);
+
   // Handle form changes
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData({
@@ -157,6 +193,36 @@ export default function QuestionGeneratorPage() {
   // Handle topic selection
   const handleTopicChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTopic(e.target.value);
+  };
+
+  // Handle custom prompt change
+  const handleCustomPromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCustomPrompt(e.target.value);
+  };
+
+  // Handle prompt selection
+  const handlePromptSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const promptId = e.target.value;
+    setSelectedPromptId(promptId);
+    
+    // Find the selected prompt and set its content to the custom prompt field
+    const selectedPrompt = savedPrompts.find(p => p.id === promptId);
+    if (selectedPrompt) {
+      setCustomPrompt(selectedPrompt.template);
+    }
+  };
+
+  // Toggle custom prompt section
+  const toggleCustomPrompt = () => {
+    setUseCustomPrompt(!useCustomPrompt);
+    if (!useCustomPrompt && !isPromptSectionExpanded) {
+      setIsPromptSectionExpanded(true);
+    }
+  };
+
+  // Toggle prompt section expansion
+  const togglePromptSection = () => {
+    setIsPromptSectionExpanded(!isPromptSectionExpanded);
   };
 
   // Handle selection of cards (for question type, difficulty, AI model)
@@ -174,13 +240,20 @@ export default function QuestionGeneratorPage() {
     setError(null);
 
     try {
-      // Prepare data for the API call - FIXED: ensure proper enum values are sent
+      // Get the topic name for placeholder substitution in prompt
+      const topic = topics.find(t => t.id === selectedTopic);
+      const topicName = topic ? topic.name : "";
+
+      // Prepare data for the API call
       const generationData = {
         topic_id: selectedTopic,
         num_questions: formData.numberOfQuestions,
         question_types: [formData.questionType], // Ensuring this is an array
         difficulty: formData.difficultyLevel,
-        custom_prompt: null, // We could add this option in the future
+        custom_prompt: useCustomPrompt ? customPrompt
+          .replace("{topic}", topicName)
+          .replace("{difficulty}", formData.difficultyLevel)
+          .replace("{question_type}", formData.questionType) : null,
       };
 
       // Log the request data for debugging
@@ -211,14 +284,18 @@ export default function QuestionGeneratorPage() {
 
   // Check if the form is valid
   const isFormValid = () => {
-    return (
+    const basicRequirements = 
       formData.numberOfQuestions > 0 &&
       formData.questionType !== "" &&
       formData.difficultyLevel !== "" &&
       formData.questionSetName.trim() !== "" &&
       formData.aiModel !== "" &&
-      selectedTopic !== ""
-    );
+      selectedTopic !== "";
+      
+    if (!useCustomPrompt) return basicRequirements;
+    
+    // If using custom prompt, also require the prompt to be non-empty
+    return basicRequirements && customPrompt.trim() !== "";
   };
 
   // Handle viewing the generated questions
@@ -399,6 +476,90 @@ export default function QuestionGeneratorPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Custom Prompt Section */}
+                <div className="mb-8 border rounded-lg p-4 bg-gray-50">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer"
+                    onClick={togglePromptSection}>
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-blue-600 mr-2" />
+                      <h3 className="text-lg font-medium">AI Prompt Settings</h3>
+                    </div>
+                    <button type="button" className="text-gray-500">
+                      {isPromptSectionExpanded ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  {isPromptSectionExpanded && (
+                    <div className="mt-4">
+                      <div className="flex items-center mb-4">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={useCustomPrompt}
+                            onChange={toggleCustomPrompt}
+                            className="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-gray-700">Use custom prompt</span>
+                        </label>
+                      </div>
+                      
+                      {useCustomPrompt && (
+                        <div className="space-y-4">
+                          <div>
+                            <label htmlFor="promptTemplate" className="block text-sm font-medium text-gray-700 mb-1">
+                              Select a prompt template
+                            </label>
+                            <select
+                              id="promptTemplate"
+                              value={selectedPromptId}
+                              onChange={handlePromptSelect}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              disabled={isPromptLoading}
+                            >
+                              <option value="">-- Select a prompt template --</option>
+                              {savedPrompts.map((prompt) => (
+                                <option key={prompt.id} value={prompt.id}>
+                                  {prompt.name} {prompt.is_default ? "(Default)" : ""}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="customPrompt" className="block text-sm font-medium text-gray-700 mb-1">
+                              Edit or create your custom prompt
+                            </label>
+                            <textarea
+                              id="customPrompt"
+                              value={customPrompt}
+                              onChange={handleCustomPromptChange}
+                              rows={6}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Enter your custom prompt here. You can use {topic}, {difficulty}, and {question_type} as placeholders."
+                            ></textarea>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Use {"{topic}"}, {"{difficulty}"}, and {"{question_type}"} as placeholders for dynamic content.
+                            </p>
+                          </div>
+                          
+                          <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-700 flex">
+                            <AlertTriangle className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+                            <p>
+                              Custom prompts allow you to control exactly how questions are generated. 
+                              For best results, provide clear instructions about the format, style, and content of questions you want.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Question Set Name */}

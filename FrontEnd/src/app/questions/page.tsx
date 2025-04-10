@@ -34,13 +34,16 @@ import {
   Activity,
   Zap,
   Sparkles,
+  SortDesc,
+  ArrowUpDown,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 
-// First, let's define interfaces for our data structures
+// Updated interface to include created_at field
 interface Question {
   id: string;
   question_text: string;
@@ -50,7 +53,9 @@ interface Question {
   options?: string[];
   correct_answer?: string | string[];
   explanation?: string;
-  topic_id: string; // Note: Using topic_id, not a topic object with unit_id
+  topic_id: string;
+  created_at: string; // Added created_at field
+  updated_at?: string;
 }
 
 interface Topic {
@@ -59,11 +64,14 @@ interface Topic {
   unit_id?: string;
 }
 
+// Updated filter state to include sorting
 interface FilterState {
   topic_id: string;
   question_type: string;
   difficulty: string;
   ai_generated: boolean | undefined;
+  sort_by: string;
+  sort_order: "asc" | "desc";
 }
 
 const QuestionsPage = () => {
@@ -71,12 +79,17 @@ const QuestionsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
+  
+  // Updated filters state to include sorting options
   const [filters, setFilters] = useState<FilterState>({
     topic_id: "",
     question_type: "",
     difficulty: "",
     ai_generated: undefined,
+    sort_by: "created_at", // Default sort by creation date
+    sort_order: "desc" // Default sort order is newest first
   });
+  
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -97,19 +110,46 @@ const QuestionsPage = () => {
     curricula: {},
   });
 
+  // Sort options
+  const sortOptions = [
+    { value: "created_at", label: "Date Created" },
+    { value: "updated_at", label: "Date Updated" },
+    { value: "question_text", label: "Question Text" },
+    { value: "difficulty", label: "Difficulty Level" },
+  ];
+
   // Fetch questions and their hierarchical data
   const fetchQuestions = async () => {
     try {
       setIsLoading(true);
-      const data = await questionAPI.getAllQuestions(filters);
+      
+      // Pass sorting parameters to API
+      const apiFilters = {
+        ...filters,
+        sort_by: filters.sort_by,
+        sort_order: filters.sort_order
+      };
+      
+      const data = await questionAPI.getAllQuestions(apiFilters);
       console.log("Questions received:", data);
-      setQuestions(data);
+      
+      // If API doesn't support sorting, we can sort locally
+      let sortedData = [...data];
+      if (filters.sort_by === "created_at") {
+        sortedData.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0).getTime();
+          const dateB = new Date(b.created_at || 0).getTime();
+          return filters.sort_order === "desc" ? dateB - dateA : dateA - dateB;
+        });
+      }
+      
+      setQuestions(sortedData);
 
       const allTopics = await curriculumAPI.getTopics();
       setTopics(allTopics);
 
       // Fetch hierarchy data for all questions
-      await fetchHierarchyData(data);
+      await fetchHierarchyData(sortedData);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load questions";
@@ -118,6 +158,19 @@ const QuestionsPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Unknown date";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // Fetch all hierarchical data needed for displaying question paths
@@ -181,11 +234,6 @@ const QuestionsPage = () => {
           units[unit.id] = unit;
         }
       });
-
-      // The rest of the code should use the appropriate API:
-      // courseAPI instead of curriculumAPI.getCourse
-      // subjectAPI instead of curriculumAPI.getSubject
-      // curriculumAPI.getCurriculum stays the same
 
       // Extract course IDs from units
       const courseIds = new Set<string>();
@@ -361,6 +409,14 @@ const QuestionsPage = () => {
     }));
   };
 
+  // Handle sort order toggle
+  const toggleSortOrder = () => {
+    setFilters(prev => ({
+      ...prev,
+      sort_order: prev.sort_order === "asc" ? "desc" : "asc"
+    }));
+  };
+
   // Handle edit button click
   const handleEdit = (question: Question) => {
     setEditingQuestion(question);
@@ -493,6 +549,14 @@ const QuestionsPage = () => {
                 <span className="text-xs font-medium">AI Generated</span>
               </div>
             )}
+            
+            {/* Date label - NEW */}
+            <div className="inline-flex items-center px-3 py-1.5 rounded-md bg-gray-50 text-gray-700 border border-gray-200 shadow-sm">
+              <Calendar size={14} className="mr-1.5" />
+              <span className="text-xs font-medium">
+                {formatDate(question.created_at)}
+              </span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
@@ -632,14 +696,14 @@ const QuestionsPage = () => {
           </Link>
         </div>
 
-        {/* Filters */}
+        {/* Filters with new Sort options */}
         <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter size={18} className="text-gray-500" />
-            <h2 className="font-medium">Filters</h2>
+            <h2 className="font-medium">Filters & Sorting</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm text-gray-600 mb-1">Topic</label>
               <select
@@ -717,6 +781,36 @@ const QuestionsPage = () => {
                 <option value="false">Manually Created</option>
               </select>
             </div>
+
+            {/* NEW Sort Options */}
+            <div className="md:col-span-1">
+              <label className="block text-sm text-gray-600 mb-1">Sort By</label>
+              <div className="flex gap-2">
+                <select
+                  name="sort_by"
+                  value={filters.sort_by}
+                  onChange={handleFilterChange}
+                  className="flex-grow p-2 border border-gray-300 rounded-md text-sm"
+                >
+                  {sortOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <button 
+                  onClick={toggleSortOrder}
+                  className="p-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+                  title={filters.sort_order === "asc" ? "Ascending order" : "Descending order"}
+                >
+                  {filters.sort_order === "asc" ? (
+                    <ArrowUpDown size={18} className="text-gray-700" />
+                  ) : (
+                    <SortDesc size={18} className="text-gray-700" />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -757,7 +851,9 @@ const QuestionsPage = () => {
           ) : (
             <>
               <p className="text-sm text-gray-600 mb-4">
-                Showing {questions.length} questions
+                Showing {questions.length} questions, sorted by {
+                  sortOptions.find(opt => opt.value === filters.sort_by)?.label || "Date Created"
+                } ({filters.sort_order === "asc" ? "oldest first" : "newest first"})
               </p>
               {questions.map(renderQuestion)}
             </>

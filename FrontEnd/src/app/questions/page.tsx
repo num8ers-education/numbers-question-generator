@@ -3,12 +3,13 @@
 
 import { useState, useEffect } from "react";
 import Layout from "@/app/layout/Layout";
-import { questionAPI, curriculumAPI } from "@/services/api";
+import { questionAPI, curriculumAPI,topicAPI,unitAPI,courseAPI,subjectAPI} from "@/services/api";
 import { FileText, Filter, Search, Trash2, Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import { ChevronRight } from "lucide-react";
 
 // First, let's define interfaces for our data structures
 interface Question {
@@ -20,14 +21,13 @@ interface Question {
   options?: string[];
   correct_answer?: string | string[];
   explanation?: string;
-  topic?: {
-    name: string;
-  };
+  topic_id: string; // Note: Using topic_id, not a topic object with unit_id
 }
 
 interface Topic {
   id: string;
   name: string;
+  unit_id?: string;
 }
 
 interface FilterState {
@@ -53,16 +53,34 @@ const QuestionsPage = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
 
-  // Add this function to handle the edit button click
+  // Update hierarchyData state to include topics
+  const [hierarchyData, setHierarchyData] = useState<{
+    topics: Record<string, any>;
+    units: Record<string, any>;
+    courses: Record<string, any>;
+    subjects: Record<string, any>;
+    curricula: Record<string, any>;
+  }>({
+    topics: {},
+    units: {},
+    courses: {},
+    subjects: {},
+    curricula: {},
+  });
 
+  // Fetch questions and their hierarchical data
   const fetchQuestions = async () => {
     try {
       setIsLoading(true);
       const data = await questionAPI.getAllQuestions(filters);
+      console.log("Questions received:", data);
       setQuestions(data);
 
       const allTopics = await curriculumAPI.getTopics();
       setTopics(allTopics);
+
+      // Fetch hierarchy data for all questions
+      await fetchHierarchyData(data);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load questions";
@@ -73,10 +91,239 @@ const QuestionsPage = () => {
     }
   };
 
+  // Fetch all hierarchical data needed for displaying question paths
+  const fetchHierarchyData = async (questions: Question[]) => {
+    try {
+      console.log("Starting to fetch hierarchy data");
+
+      // Extract unique topic IDs from questions
+      const topicIds = new Set<string>();
+      questions.forEach((q) => {
+        if (q.topic_id) topicIds.add(q.topic_id);
+      });
+
+      console.log("Topic IDs found:", Array.from(topicIds));
+
+      if (topicIds.size === 0) {
+        console.log("No topics to fetch");
+        return;
+      }
+
+      // Fetch all topics first - using topicAPI instead of curriculumAPI
+      const topicsMap: Record<string, any> = {};
+      const topicsData = await Promise.all(
+        Array.from(topicIds).map((id) => topicAPI.getTopic(id))
+      );
+
+      console.log("Topics fetched:", topicsData);
+
+      topicsData.forEach((topic) => {
+        if (topic) {
+          topicsMap[topic.id] = topic;
+        }
+      });
+
+      // Extract unit IDs from topics
+      const unitIds = new Set<string>();
+      Object.values(topicsMap).forEach((topic) => {
+        if (topic.unit_id) unitIds.add(topic.unit_id);
+      });
+
+      if (unitIds.size === 0) {
+        console.log("No units to fetch");
+        setHierarchyData({
+          topics: topicsMap,
+          units: {},
+          courses: {},
+          subjects: {},
+          curricula: {},
+        });
+        return;
+      }
+
+      // Fetch all units at once - using unitAPI
+      const units: Record<string, any> = {};
+      const unitData = await Promise.all(
+        Array.from(unitIds).map((id) => unitAPI.getUnit(id))
+      );
+
+      unitData.forEach((unit) => {
+        if (unit) {
+          units[unit.id] = unit;
+        }
+      });
+
+      // The rest of the code should use the appropriate API:
+      // courseAPI instead of curriculumAPI.getCourse
+      // subjectAPI instead of curriculumAPI.getSubject
+      // curriculumAPI.getCurriculum stays the same
+
+      // Extract course IDs from units
+      const courseIds = new Set<string>();
+      Object.values(units).forEach((unit) => {
+        if (unit.course_id) courseIds.add(unit.course_id);
+      });
+
+      if (courseIds.size === 0) {
+        setHierarchyData({
+          topics: topicsMap,
+          units,
+          courses: {},
+          subjects: {},
+          curricula: {},
+        });
+        return;
+      }
+
+      // Fetch all courses at once
+      const courses: Record<string, any> = {};
+      const courseData = await Promise.all(
+        Array.from(courseIds).map((id) => courseAPI.getCourse(id))
+      );
+
+      courseData.forEach((course) => {
+        if (course) {
+          courses[course.id] = course;
+        }
+      });
+
+      // Extract subject IDs from courses
+      const subjectIds = new Set<string>();
+      Object.values(courses).forEach((course) => {
+        if (course.subject_id) subjectIds.add(course.subject_id);
+      });
+
+      if (subjectIds.size === 0) {
+        setHierarchyData({
+          topics: topicsMap,
+          units,
+          courses,
+          subjects: {},
+          curricula: {},
+        });
+        return;
+      }
+
+      // Fetch all subjects at once
+      const subjects: Record<string, any> = {};
+      const subjectData = await Promise.all(
+        Array.from(subjectIds).map((id) => subjectAPI.getSubject(id))
+      );
+
+      subjectData.forEach((subject) => {
+        if (subject) {
+          subjects[subject.id] = subject;
+        }
+      });
+
+      // Extract curriculum IDs from subjects
+      const curriculumIds = new Set<string>();
+      Object.values(subjects).forEach((subject) => {
+        if (subject.curriculum_id) curriculumIds.add(subject.curriculum_id);
+      });
+
+      if (curriculumIds.size === 0) {
+        setHierarchyData({
+          topics: topicsMap,
+          units,
+          courses,
+          subjects,
+          curricula: {},
+        });
+        return;
+      }
+
+      // Fetch all curricula at once
+      const curricula: Record<string, any> = {};
+      const curriculumData = await Promise.all(
+        Array.from(curriculumIds).map((id) => curriculumAPI.getCurriculum(id))
+      );
+
+      curriculumData.forEach((curriculum) => {
+        if (curriculum) {
+          curricula[curriculum.id] = curriculum;
+        }
+      });
+
+      // Store all hierarchy data
+      setHierarchyData({
+        topics: topicsMap,
+        units,
+        courses,
+        subjects,
+        curricula,
+      });
+
+      console.log("Hierarchy data set successfully:", {
+        topics: Object.keys(topicsMap).length,
+        units: Object.keys(units).length,
+        courses: Object.keys(courses).length,
+        subjects: Object.keys(subjects).length,
+        curricula: Object.keys(curricula).length,
+      });
+    } catch (error) {
+      console.error("Error fetching hierarchy data:", error);
+    }
+  };
+
+  // Build hierarchy path for a single question
+  const getQuestionHierarchy = (question: Question) => {
+    if (!question.topic_id) {
+      return null;
+    }
+
+    try {
+      const { topics, units, courses, subjects, curricula } = hierarchyData;
+
+      // First get the topic
+      const topic = topics[question.topic_id];
+      if (!topic) {
+        return null;
+      }
+
+      // Then get the unit
+      const unit = units[topic.unit_id];
+      if (!unit) {
+        return null;
+      }
+
+      // Get the course
+      const course = courses[unit.course_id];
+      if (!course) {
+        return null;
+      }
+
+      // Get the subject
+      const subject = subjects[course.subject_id];
+      if (!subject) {
+        return null;
+      }
+
+      // Get the curriculum
+      const curriculum = curricula[subject.curriculum_id];
+      if (!curriculum) {
+        return null;
+      }
+
+      return {
+        topic: topic.name,
+        unit: unit.name,
+        course: course.name,
+        subject: subject.name,
+        curriculum: curriculum.name,
+      };
+    } catch (error) {
+      console.error("Error getting question hierarchy:", error);
+      return null;
+    }
+  };
+
+  // Load questions when filters change
   useEffect(() => {
     fetchQuestions();
   }, [filters]);
 
+  // Handle filter changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({
@@ -85,16 +332,19 @@ const QuestionsPage = () => {
     }));
   };
 
+  // Handle edit button click
   const handleEdit = (question: Question) => {
     setEditingQuestion(question);
     setIsEditModalOpen(true);
   };
 
+  // Handle delete request
   const handleDeleteRequest = (id: string) => {
     setQuestionToDelete(id);
     setConfirmDialogOpen(true);
   };
 
+  // Handle delete confirmation
   const handleDelete = async () => {
     if (!questionToDelete) return;
 
@@ -111,16 +361,22 @@ const QuestionsPage = () => {
     }
   };
 
+  // Render a single question with its hierarchy
   const renderQuestion = (question: Question) => {
     // Check if it's a written answer type
     const isWrittenAnswerType =
       question.question_type === "ShortAnswer" ||
       question.question_type === "LongAnswer";
 
+    // Get hierarchy data for this question
+    const hierarchy = getQuestionHierarchy(question);
+    const topicName = hierarchyData.topics[question.topic_id]?.name;
+
     return (
       <div
         key={question.id}
-        className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
+        className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm"
+      >
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <span
@@ -137,7 +393,8 @@ const QuestionsPage = () => {
                   : question.question_type === "ShortAnswer"
                   ? "bg-orange-100 text-orange-800"
                   : "bg-pink-100 text-pink-800" // LongAnswer
-              }`}>
+              }`}
+            >
               {question.question_type}
             </span>
             <span
@@ -148,7 +405,8 @@ const QuestionsPage = () => {
                   : question.difficulty === "Medium"
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-red-100 text-red-800"
-              }`}>
+              }`}
+            >
               {question.difficulty}
             </span>
             {question.ai_generated && (
@@ -160,12 +418,14 @@ const QuestionsPage = () => {
           <div className="flex gap-2">
             <button
               className="p-1 text-gray-500 hover:text-blue-500"
-              onClick={() => handleEdit(question)}>
+              onClick={() => handleEdit(question)}
+            >
               <Edit size={16} />
             </button>
             <button
               className="p-1 text-gray-500 hover:text-red-500"
-              onClick={() => handleDeleteRequest(question.id)}>
+              onClick={() => handleDeleteRequest(question.id)}
+            >
               <Trash2 size={16} />
             </button>
           </div>
@@ -190,7 +450,8 @@ const QuestionsPage = () => {
                         question.correct_answer.includes(option))
                         ? "font-medium"
                         : ""
-                    }>
+                    }
+                  >
                     {option}{" "}
                     {(option === question.correct_answer ||
                       (Array.isArray(question.correct_answer) &&
@@ -220,9 +481,44 @@ const QuestionsPage = () => {
           </p>
         </div>
 
-        {question.topic && (
+        {/* Topic name (fallback display) */}
+        {topicName && !hierarchy && (
           <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-            Topic: {question.topic.name}
+            Topic: {topicName}
+          </div>
+        )}
+
+        {/* Full hierarchy path */}
+        {hierarchy && (
+          <div className="mt-3 pt-3 border-t border-gray-100 text-xs">
+            <div className="flex flex-wrap items-center text-gray-500">
+              <span className="font-medium mr-1">Path:</span>
+              <div className="flex items-center flex-wrap">
+                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded mr-1 mb-1">
+                  {hierarchy.curriculum}
+                </span>
+                <ChevronRight size={12} className="text-gray-400 mr-1" />
+
+                <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded mr-1 mb-1">
+                  {hierarchy.subject}
+                </span>
+                <ChevronRight size={12} className="text-gray-400 mr-1" />
+
+                <span className="bg-green-50 text-green-700 px-2 py-1 rounded mr-1 mb-1">
+                  {hierarchy.course}
+                </span>
+                <ChevronRight size={12} className="text-gray-400 mr-1" />
+
+                <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded mr-1 mb-1">
+                  {hierarchy.unit}
+                </span>
+                <ChevronRight size={12} className="text-gray-400 mr-1" />
+
+                <span className="bg-red-50 text-red-700 px-2 py-1 rounded mb-1">
+                  {hierarchy.topic}
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -236,7 +532,8 @@ const QuestionsPage = () => {
           <h1 className="text-2xl font-bold">Questions</h1>
           <Link
             href="/generate"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2">
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
             <Plus size={16} />
             Generate Questions
           </Link>
@@ -256,7 +553,8 @@ const QuestionsPage = () => {
                 name="topic_id"
                 value={filters.topic_id}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm">
+                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+              >
                 <option value="">All Topics</option>
                 {topics.map((topic) => (
                   <option key={topic.id} value={topic.id}>
@@ -274,7 +572,8 @@ const QuestionsPage = () => {
                 name="question_type"
                 value={filters.question_type}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm">
+                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+              >
                 <option value="">All Types</option>
                 <option value="MCQ">Multiple Choice</option>
                 <option value="MultipleAnswer">Multiple Answer</option>
@@ -293,7 +592,8 @@ const QuestionsPage = () => {
                 name="difficulty"
                 value={filters.difficulty}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm">
+                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+              >
                 <option value="">All Difficulties</option>
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
@@ -317,7 +617,8 @@ const QuestionsPage = () => {
                     ai_generated: value === "" ? undefined : value === "true",
                   }));
                 }}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm">
+                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+              >
                 <option value="">All Sources</option>
                 <option value="true">AI Generated</option>
                 <option value="false">Manually Created</option>
@@ -338,7 +639,8 @@ const QuestionsPage = () => {
               <p className="text-red-700">{error}</p>
               <button
                 className="mt-2 text-red-700 font-medium underline"
-                onClick={() => window.location.reload()}>
+                onClick={() => window.location.reload()}
+              >
                 Retry
               </button>
             </div>
@@ -353,7 +655,8 @@ const QuestionsPage = () => {
               </p>
               <Link
                 href="/generate"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+              >
                 <Plus size={16} />
                 Generate Questions
               </Link>

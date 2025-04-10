@@ -98,10 +98,15 @@ const Sidebar = () => {
     logout();
   };
 
+  // Determine the correct dashboard route based on user role
+  const dashboardRoute = "/dashboard";
+
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-4 border-b border-gray-200">
-        <h1 className="font-bold text-xl">Question Generator</h1>
+        <Link href={dashboardRoute} className="inline-block">
+          <h1 className="font-bold text-xl hover:text-blue-600 transition-colors cursor-pointer">Question Generator</h1>
+        </Link>
       </div>
 
       {user && (

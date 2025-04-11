@@ -46,6 +46,7 @@ class Token(BaseModel):
     token_type: str
     user_id: str
     role: UserRole
+    full_name: Optional[str] = None  # Added for returning user name with token response
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None

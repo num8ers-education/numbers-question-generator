@@ -4,21 +4,26 @@ import type { NextRequest } from "next/server";
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  // Check for token in cookies (for SSR) or Authorization header (for client-side)
+  const token =
+    request.cookies.get("token")?.value ||
+    request.headers.get("Authorization")?.replace("Bearer ", "");
   const path = request.nextUrl.pathname;
 
   // Public paths that don't require authentication
-  const publicPaths = ["/", "/login", "/signup", "/auth/signup", "/forgot-password"];
+  const publicPaths = [
+    "/",
+    "/login",
+    "/signup",
+    "/auth/signup",
+    "/forgot-password",
+  ];
 
   // Admin-only paths
   const adminPaths = ["/users", "/admin"];
 
   // Teacher and admin paths
-  const teacherAdminPaths = [
-    "/questions/create",
-    "/curricula/create",
-  
-  ];
+  const teacherAdminPaths = ["/questions/create", "/curricula/create"];
 
   // Helper function to check if the path starts with any of the given prefixes
   const pathStartsWith = (path: string, prefixes: string[]) => {

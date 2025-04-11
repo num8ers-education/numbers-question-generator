@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { authAPI } from "@/services/api";
 import { showToast } from "@/components/toast";
+import cookieService from "@/services/cookieService";
 
 // Define types
 interface User {
@@ -65,12 +66,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const userData = JSON.parse(storedUser);
           setUser(userData);
           setIsAuthenticated(true);
+
+          // Make sure cookie is in sync with localStorage
+          cookieService.syncTokenBetweenStorages(token);
         }
       } catch (err) {
         console.error("Auth check error:", err);
         // Clear potentially corrupted data
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        cookieService.syncTokenBetweenStorages(null);
       } finally {
         setIsLoading(false);
       }
@@ -86,12 +91,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const response = await authAPI.login(email, password);
+
+      // Set user data in state
       setUser({
         id: response.user_id,
         email: email,
         full_name: response.full_name || "User",
         role: response.role,
       });
+
+      // Sync token to cookie for middleware
+      cookieService.syncTokenBetweenStorages(response.access_token);
+
       setIsAuthenticated(true);
       showToast.success("Login successful");
     } catch (err: any) {
@@ -106,63 +117,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Signup function - only for student registration
-  // const signup = async (fullName: string, email: string, password: string, role: string) => {
-  //   setIsLoading(true);
-  //   setError(null);
-
-  //   try {
-  //     // Only student registration is supported through the public signup
-  //     if (role !== "student") {
-  //       throw new Error("Only student registration is supported. Teachers must be added by an administrator.");
-  //     }
-
-  //     // Prepare user data with the expected field names
-  //     const userData = {
-  //       email: email,
-  //       password: password,
-  //       full_name: fullName,
-  //       role: "student",
-  //     };
-
-  //     console.log("Sending registration data:", userData);
-
-  //     // Use student register endpoint
-  //     const response = await authAPI.registerStudent(userData);
-
-  //     // After successful registration, set user data from the response
-  //     if (response && response.access_token) {
-  //       setIsAuthenticated(true);
-  //       setUser({
-  //         id: response.user_id || "temp-id",
-  //         email: email,
-  //         full_name: fullName,
-  //         role: "student",
-  //       });
-  //     } else {
-  //       // If no token is returned, try to log in manually
-  //       await login(email, password);
-  //     }
-
-  //     showToast.success("Registration successful");
-  //   } catch (err: any) {
-  //     console.error("Registration error:", err);
-  //     // Try to extract the most helpful error message
-  //     const errorMessage =
-  //       err.response?.data?.message ||  // Try to get message from response data
-  //       err.response?.data?.error ||    // Or error field
-  //       err.message ||                  // Or the error object's message
-  //       "Registration failed. Please try again."; // Fallback
-
-  //     setError(errorMessage);
-  //     showToast.error(errorMessage);
-  //     throw err;
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // Updated signup function for AuthContext.tsx
-
   const signup = async (
     fullName: string,
     email: string,
@@ -207,6 +161,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           })
         );
 
+        // Sync token to cookie for middleware
+        cookieService.syncTokenBetweenStorages(response.access_token);
+
         setIsAuthenticated(true);
         setUser({
           id: response.user_id || "temp-id",
@@ -239,7 +196,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Logout function
   const logout = () => {
-    authAPI.logout();
+    // Clear localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // Clear cookie
+    cookieService.syncTokenBetweenStorages(null);
+
+    // Update state
     setUser(null);
     setIsAuthenticated(false);
     showToast.success("Logged out successfully");

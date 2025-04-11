@@ -37,12 +37,14 @@ import {
   SortDesc,
   ArrowUpDown,
   Calendar,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { MathJax } from "better-react-mathjax";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Updated interface to include created_at field
 interface Question {
@@ -76,6 +78,9 @@ interface FilterState {
 }
 
 const QuestionsPage = () => {
+  const { user } = useAuth();
+  const isTeacherOrAdmin = user?.role === "admin" || user?.role === "teacher";
+  
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -559,20 +564,38 @@ const QuestionsPage = () => {
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              className="p-1 text-gray-500 hover:text-blue-500"
-              onClick={() => handleEdit(question)}
-            >
-              <Edit size={16} />
-            </button>
-            <button
-              className="p-1 text-gray-500 hover:text-red-500"
-              onClick={() => handleDeleteRequest(question.id)}
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
+
+          {/* Admin/Teacher Controls - Only show for appropriate roles */}
+          {isTeacherOrAdmin && (
+            <div className="flex gap-2">
+              <button
+                className="p-1 text-gray-500 hover:text-blue-500"
+                onClick={() => handleEdit(question)}
+                title="Edit Question"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                className="p-1 text-gray-500 hover:text-red-500"
+                onClick={() => handleDeleteRequest(question.id)}
+                title="Delete Question"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Student View button - Show for students */}
+          {!isTeacherOrAdmin && (
+            <div>
+              <button
+                className="p-1 text-gray-500 hover:text-blue-500"
+                title="View Question Details"
+              >
+                <Eye size={16} />
+              </button>
+            </div>
+          )}
         </div>
 
         <h3 className="font-medium text-gray-900 mb-2">
@@ -684,17 +707,21 @@ const QuestionsPage = () => {
   };
 
   return (
-    <Layout allowedRoles={["admin", "teacher"]}>
+    <Layout allowedRoles={["admin", "teacher", "student"]}>
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Questions</h1>
-          <Link
-            href="/generate"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Generate Questions
-          </Link>
+          
+          {/* Only show for teachers/admins */}
+          {isTeacherOrAdmin && (
+            <Link
+              href="/generate"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Generate Questions
+            </Link>
+          )}
         </div>
 
         {/* Filters with new Sort options */}
@@ -839,15 +866,19 @@ const QuestionsPage = () => {
                 No questions found
               </h3>
               <p className="text-gray-600 mb-4">
-                Try adjusting your filters or generate some new questions.
+                Try adjusting your filters or check back later.
               </p>
-              <Link
-                href="/generate"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-              >
-                <Plus size={16} />
-                Generate Questions
-              </Link>
+              
+              {/* Only show generate button for teachers/admins */}
+              {isTeacherOrAdmin && (
+                <Link
+                  href="/generate"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Generate Questions
+                </Link>
+              )}
             </div>
           ) : (
             <>
@@ -861,16 +892,19 @@ const QuestionsPage = () => {
           )}
         </div>
 
-        <ConfirmationDialog
-          isOpen={confirmDialogOpen}
-          onClose={() => setConfirmDialogOpen(false)}
-          onConfirm={handleDelete}
-          title="Delete Question"
-          message="Are you sure you want to delete this question? This action cannot be undone."
-          confirmText="Delete"
-        />
+        {/* Only show for admin/teacher */}
+        {isTeacherOrAdmin && (
+          <ConfirmationDialog
+            isOpen={confirmDialogOpen}
+            onClose={() => setConfirmDialogOpen(false)}
+            onConfirm={handleDelete}
+            title="Delete Question"
+            message="Are you sure you want to delete this question? This action cannot be undone."
+            confirmText="Delete"
+          />
+        )}
 
-        {isEditModalOpen && editingQuestion && (
+        {isTeacherOrAdmin && isEditModalOpen && editingQuestion && (
           <EditQuestionModal
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}

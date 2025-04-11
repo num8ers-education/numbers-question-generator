@@ -12,6 +12,8 @@ import {
   BookOpen,
   Users,
   FileText,
+  BookCopy,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -82,8 +84,13 @@ const Sidebar = () => {
       return [
         ...baseMenuItems,
         {
-          name: "Practice",
+          name: "Question Bank",
           icon: <FileQuestion size={20} />,
+          href: "/questions",
+        },
+        {
+          name: "Practice",
+          icon: <GraduationCap size={20} />,
           href: "/practice",
         },
         { name: "Progress", icon: <BarChart3 size={20} />, href: "/progress" },
@@ -99,7 +106,7 @@ const Sidebar = () => {
   };
 
   // Determine the correct dashboard route based on user role
-  const dashboardRoute = "/dashboard";
+  const dashboardRoute = user?.role === "student" ? "/student/dashboard" : "/dashboard";
 
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col">

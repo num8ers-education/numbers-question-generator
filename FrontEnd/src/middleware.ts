@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Public paths that don't require authentication
-  const publicPaths = ["/", "/login", "/register", "/forgot-password"];
+  const publicPaths = ["/", "/login", "/signup", "/auth/signup", "/forgot-password"];
 
   // Admin-only paths
   const adminPaths = ["/users", "/admin"];

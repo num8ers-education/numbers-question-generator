@@ -1,61 +1,65 @@
 // src/contexts/AuthContext.tsx
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { useRouter } from "next/navigation";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authAPI } from "@/services/api";
-import toast from "react-hot-toast";
 import { showToast } from "@/components/toast";
 
-type User = {
+// Define types
+interface User {
   id: string;
   email: string;
   full_name: string;
   role: "admin" | "teacher" | "student";
-};
+}
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
   error: string | null;
-};
+  login: (email: string, password: string) => Promise<void>;
+  signup: (fullName: string, email: string, password: string, role: string) => Promise<void>;
+  logout: () => void;
+  clearError: () => void;
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Create context with default values
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  error: null,
+  login: async () => {},
+  signup: async () => {},
+  logout: () => {},
+  clearError: () => {},
+});
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+// Create provider component
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
-  // Check if user is already logged in
+  // Check for existing auth on mount
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuth = () => {
       try {
-        setIsLoading(true);
-
-        const storedUser = localStorage.getItem("user");
         const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
 
-        if (storedUser && token) {
-          setUser(JSON.parse(storedUser));
-
-          // Set the token in cookie for middleware
-          if (!document.cookie.includes("token=")) {
-            document.cookie = `token=${token}; path=/; max-age=86400`;
-          }
+        if (token && storedUser) {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          setIsAuthenticated(true);
         }
       } catch (err) {
-        console.error("Authentication check failed:", err);
+        console.error("Auth check error:", err);
+        // Clear potentially corrupted data
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
       } finally {
         setIsLoading(false);
       }
@@ -71,35 +75,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await authAPI.login(email, password);
-
-      const userData = {
+      setUser({
         id: response.user_id,
         email: email,
         full_name: response.full_name || "User",
         role: response.role,
-      };
-
-      setUser(userData);
-      document.cookie = `token=${response.access_token}; path=/; max-age=86400`;
-
-      showToast.success("Login successful!");
-
-      // Redirect based on role
-      if (userData.role === "admin" || userData.role === "teacher") {
-        router.push("/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
+      });
+      setIsAuthenticated(true);
+      showToast.success("Login successful");
     } catch (err: any) {
-      console.error("Login failed:", err);
-      setError(
-        err.response?.data?.detail ||
-          "Login failed. Please check your credentials."
-      );
-      showToast.error(
-        err.response?.data?.detail ||
-          "Login failed. Please check your credentials."
-      );
+      const errorMessage = err.response?.data?.message || "Login failed. Please try again.";
+      setError(errorMessage);
+      showToast.error(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Signup function - only for student registration
+  const signup = async (fullName: string, email: string, password: string, role: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Only student registration is supported through the public signup
+      if (role !== "student") {
+        throw new Error("Only student registration is supported. Teachers must be added by an administrator.");
+      }
+      
+      // Prepare user data with the expected field names
+      const userData = {
+        email: email,
+        password: password,
+        full_name: fullName,
+        role: "student",
+      };
+      
+      console.log("Sending registration data:", userData);
+      
+      // Use student register endpoint
+      const response = await authAPI.registerStudent(userData);
+      
+      // After successful registration, set user data from the response
+      if (response && response.access_token) {
+        setIsAuthenticated(true);
+        setUser({
+          id: response.user_id || "temp-id",
+          email: email,
+          full_name: fullName,
+          role: "student",
+        });
+      } else {
+        // If no token is returned, try to log in manually
+        await login(email, password);
+      }
+      
+      showToast.success("Registration successful");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      // Try to extract the most helpful error message
+      const errorMessage = 
+        err.response?.data?.message ||  // Try to get message from response data
+        err.response?.data?.error ||    // Or error field
+        err.message ||                  // Or the error object's message
+        "Registration failed. Please try again."; // Fallback
+      
+      setError(errorMessage);
+      showToast.error(errorMessage);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -109,26 +153,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     authAPI.logout();
     setUser(null);
+    setIsAuthenticated(false);
     showToast.success("Logged out successfully");
-    router.push("/");
   };
 
+  // Clear error state
+  const clearError = () => {
+    setError(null);
+  };
+
+  // Context value
   const value = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     isLoading,
-    login,
-    logout,
     error,
+    login,
+    signup,
+    logout,
+    clearError,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
-export function useAuth() {
+// Hook for easy access to auth context
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};

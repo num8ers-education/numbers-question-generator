@@ -106,6 +106,67 @@ export const authAPI = {
     }
   },
 
+  // Student-specific registration endpoint
+  registerStudent: async (userData: any) => {
+    try {
+      // Make sure the payload exactly matches what the API expects
+      const payload = {
+        email: userData.email,
+        password: userData.password,
+        full_name: userData.full_name,
+        role: "student"
+      };
+      
+      console.log("Sending student registration data:", payload);
+      
+      const response = await apiClient.post("/student/register", payload);
+      console.log("Registration response:", response.data);
+
+      // Save user data if token is returned
+      if (response.data && response.data.access_token) {
+        localStorage.setItem("token", response.data.access_token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: response.data.user_id,
+            email: userData.email,
+            full_name: userData.full_name,
+            role: "student",
+          })
+        );
+      }
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Student registration error details:", error.response?.data);
+      throw error;
+    }
+  },
+
+  // Student-specific login endpoint
+  studentLogin: async (email: string, password: string) => {
+    try {
+      const response = await apiClient.post("/student/login", { email, password });
+
+      if (response.data) {
+        localStorage.setItem("token", response.data.access_token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: response.data.user_id,
+            email: email,
+            full_name: response.data.full_name || "User",
+            role: "student",
+          })
+        );
+      }
+
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

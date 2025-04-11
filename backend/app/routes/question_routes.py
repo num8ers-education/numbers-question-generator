@@ -171,7 +171,7 @@ async def delete_question(
 @router.post("/questions/ai/generate", response_model=List[QuestionOut])
 async def generate_questions(
     request: QuestionGenerationRequest,
-    token_data: TokenData = Depends(teacher_required)
+    token_data: TokenData = Depends(teacher_required),
 ):
     """Generate questions using AI"""
     try:

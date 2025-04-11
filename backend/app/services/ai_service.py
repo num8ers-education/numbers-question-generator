@@ -114,7 +114,7 @@ class AIService:
                         "created_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
                         "ai_generated": True,
-                        "ai_model": "gpt-4",  # Or whichever model you're using
+                        "ai_model": "gpt4",  # Or whichever model you're using
                         "ai_prompt": prompt,
                         "content_hash": content_hash
                     }

@@ -1,7 +1,13 @@
 // src/contexts/AuthContext.tsx
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { authAPI } from "@/services/api";
 import { showToast } from "@/components/toast";
 
@@ -19,7 +25,12 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (fullName: string, email: string, password: string, role: string) => Promise<void>;
+  signup: (
+    fullName: string,
+    email: string,
+    password: string,
+    role: string
+  ) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -84,7 +95,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(true);
       showToast.success("Login successful");
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Login failed. Please try again.";
+      const errorMessage =
+        err.response?.data?.message || "Login failed. Please try again.";
       setError(errorMessage);
       showToast.error(errorMessage);
       throw err;
@@ -94,16 +106,80 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Signup function - only for student registration
-  const signup = async (fullName: string, email: string, password: string, role: string) => {
+  // const signup = async (fullName: string, email: string, password: string, role: string) => {
+  //   setIsLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     // Only student registration is supported through the public signup
+  //     if (role !== "student") {
+  //       throw new Error("Only student registration is supported. Teachers must be added by an administrator.");
+  //     }
+
+  //     // Prepare user data with the expected field names
+  //     const userData = {
+  //       email: email,
+  //       password: password,
+  //       full_name: fullName,
+  //       role: "student",
+  //     };
+
+  //     console.log("Sending registration data:", userData);
+
+  //     // Use student register endpoint
+  //     const response = await authAPI.registerStudent(userData);
+
+  //     // After successful registration, set user data from the response
+  //     if (response && response.access_token) {
+  //       setIsAuthenticated(true);
+  //       setUser({
+  //         id: response.user_id || "temp-id",
+  //         email: email,
+  //         full_name: fullName,
+  //         role: "student",
+  //       });
+  //     } else {
+  //       // If no token is returned, try to log in manually
+  //       await login(email, password);
+  //     }
+
+  //     showToast.success("Registration successful");
+  //   } catch (err: any) {
+  //     console.error("Registration error:", err);
+  //     // Try to extract the most helpful error message
+  //     const errorMessage =
+  //       err.response?.data?.message ||  // Try to get message from response data
+  //       err.response?.data?.error ||    // Or error field
+  //       err.message ||                  // Or the error object's message
+  //       "Registration failed. Please try again."; // Fallback
+
+  //     setError(errorMessage);
+  //     showToast.error(errorMessage);
+  //     throw err;
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // Updated signup function for AuthContext.tsx
+
+  const signup = async (
+    fullName: string,
+    email: string,
+    password: string,
+    role: string
+  ) => {
     setIsLoading(true);
     setError(null);
 
     try {
       // Only student registration is supported through the public signup
       if (role !== "student") {
-        throw new Error("Only student registration is supported. Teachers must be added by an administrator.");
+        throw new Error(
+          "Only student registration is supported. Teachers must be added by an administrator."
+        );
       }
-      
+
       // Prepare user data with the expected field names
       const userData = {
         email: email,
@@ -111,14 +187,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         full_name: fullName,
         role: "student",
       };
-      
+
       console.log("Sending registration data:", userData);
-      
+
       // Use student register endpoint
       const response = await authAPI.registerStudent(userData);
-      
+
       // After successful registration, set user data from the response
       if (response && response.access_token) {
+        // Save token and user data to localStorage
+        localStorage.setItem("token", response.access_token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: response.user_id || "temp-id",
+            email: email,
+            full_name: fullName,
+            role: "student",
+          })
+        );
+
         setIsAuthenticated(true);
         setUser({
           id: response.user_id || "temp-id",
@@ -130,17 +218,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // If no token is returned, try to log in manually
         await login(email, password);
       }
-      
+
       showToast.success("Registration successful");
     } catch (err: any) {
       console.error("Registration error:", err);
       // Try to extract the most helpful error message
-      const errorMessage = 
-        err.response?.data?.message ||  // Try to get message from response data
-        err.response?.data?.error ||    // Or error field
-        err.message ||                  // Or the error object's message
+      const errorMessage =
+        err.response?.data?.detail || // Try to get detail from response data
+        err.response?.data?.message || // Or message field
+        err.message || // Or the error object's message
         "Registration failed. Please try again."; // Fallback
-      
+
       setError(errorMessage);
       showToast.error(errorMessage);
       throw err;

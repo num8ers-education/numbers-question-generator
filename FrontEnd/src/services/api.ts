@@ -114,31 +114,21 @@ export const authAPI = {
         email: userData.email,
         password: userData.password,
         full_name: userData.full_name,
-        role: "student"
+        role: "student",
       };
-      
+
       console.log("Sending student registration data:", payload);
-      
+
+      // Add API version to the URL if needed to match backend routes
       const response = await apiClient.post("/student/register", payload);
       console.log("Registration response:", response.data);
 
-      // Save user data if token is returned
-      if (response.data && response.data.access_token) {
-        localStorage.setItem("token", response.data.access_token);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: response.data.user_id,
-            email: userData.email,
-            full_name: userData.full_name,
-            role: "student",
-          })
-        );
-      }
-
       return response.data;
     } catch (error: any) {
-      console.error("Student registration error details:", error.response?.data);
+      console.error(
+        "Student registration error details:",
+        error.response?.data
+      );
       throw error;
     }
   },
@@ -146,7 +136,10 @@ export const authAPI = {
   // Student-specific login endpoint
   studentLogin: async (email: string, password: string) => {
     try {
-      const response = await apiClient.post("/student/login", { email, password });
+      const response = await apiClient.post("/student/login", {
+        email,
+        password,
+      });
 
       if (response.data) {
         localStorage.setItem("token", response.data.access_token);

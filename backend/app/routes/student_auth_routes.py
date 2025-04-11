@@ -8,9 +8,9 @@ from app.auth.auth_handler import get_password_hash, verify_password, create_acc
 
 router = APIRouter(tags=["Student Authentication"])
 
-@router.post("/student/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/student/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register_student(user: UserCreate):
-    """Register a new student account"""
+    """Register a new student account and return a token"""
     
     # Check if user with this email already exists
     if users_collection.find_one({"email": user.email}):
@@ -23,8 +23,13 @@ async def register_student(user: UserCreate):
     hashed_password = get_password_hash(user.password)
     
     now = datetime.utcnow()
+    user_id = ObjectId()
+    
+    # Force role to be student for security
     user_data = {
-        **user.dict(exclude={"password"}),
+        "_id": user_id,
+        "email": user.email,
+        "full_name": user.full_name,
         "role": UserRole.STUDENT,  # Force role to be student
         "hashed_password": hashed_password,
         "is_active": True,
@@ -32,13 +37,33 @@ async def register_student(user: UserCreate):
         "updated_at": now
     }
     
-    result = users_collection.insert_one(user_data)
+    try:
+        # Insert the new user
+        users_collection.insert_one(user_data)
+        
+        # Generate token for automatic login
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user_id), "role": UserRole.STUDENT},
+            expires_delta=access_token_expires
+        )
+        
+        # Return token response
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            user_id=str(user_id),
+            role=UserRole.STUDENT,
+            full_name=user.full_name
+        )
     
-    # Fetch the created user (without password)
-    created_user = users_collection.find_one({"_id": result.inserted_id})
-    
-    return created_user
-
+    except Exception as e:
+        # If there's an error, we should log it and return a helpful message
+        print(f"Error registering student: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
 @router.post("/student/login", response_model=Token)
 async def student_login(user_data: UserLogin):
     """Student login endpoint"""

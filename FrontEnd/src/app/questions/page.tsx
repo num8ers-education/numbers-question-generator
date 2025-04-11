@@ -1,6 +1,5 @@
-// src/app/questions/page.tsx
+// Updated QuestionsPage component with ViewQuestionModal integration
 "use client";
-
 import { useState, useEffect } from "react";
 import Layout from "@/app/layout/Layout";
 import {
@@ -41,6 +40,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import EditQuestionModal from "./EditQuestionModal";
+import ViewQuestionModal from "./ViewQuestionModal"; // Import the new component
 import { showToast } from "@/components/toast";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { MathJax } from "better-react-mathjax";
@@ -100,6 +100,10 @@ const QuestionsPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
+  
+  // New state for viewing question modal
+  const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Update hierarchyData state to include topics
   const [hierarchyData, setHierarchyData] = useState<{
@@ -429,6 +433,12 @@ const QuestionsPage = () => {
     setIsEditModalOpen(true);
   };
 
+  // Handle view button click (for students)
+  const handleView = (question: Question) => {
+    setViewingQuestion(question);
+    setIsViewModalOpen(true);
+  };
+
   // Handle delete request
   const handleDeleteRequest = (id: string) => {
     setQuestionToDelete(id);
@@ -556,7 +566,7 @@ const QuestionsPage = () => {
               </div>
             )}
             
-            {/* Date label - NEW */}
+            {/* Date label */}
             <div className="inline-flex items-center px-3 py-1.5 rounded-md bg-gray-50 text-gray-700 border border-gray-200 shadow-sm">
               <Calendar size={14} className="mr-1.5" />
               <span className="text-xs font-medium">
@@ -590,6 +600,7 @@ const QuestionsPage = () => {
             <div>
               <button
                 className="p-1 text-gray-500 hover:text-blue-500"
+                onClick={() => handleView(question)}
                 title="View Question Details"
               >
                 <Eye size={16} />
@@ -724,7 +735,7 @@ const QuestionsPage = () => {
           )}
         </div>
 
-        {/* Filters with new Sort options */}
+        {/* Filters with Sort options */}
         <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter size={18} className="text-gray-500" />
@@ -810,7 +821,7 @@ const QuestionsPage = () => {
               </select>
             </div>
 
-            {/* NEW Sort Options */}
+            {/* Sort Options */}
             <div className="md:col-span-1">
               <label className="block text-sm text-gray-600 mb-1">Sort By</label>
               <div className="flex gap-2">
@@ -904,6 +915,7 @@ const QuestionsPage = () => {
           />
         )}
 
+        {/* Edit Modal for admin/teacher */}
         {isTeacherOrAdmin && isEditModalOpen && editingQuestion && (
           <EditQuestionModal
             isOpen={isEditModalOpen}
@@ -914,6 +926,17 @@ const QuestionsPage = () => {
               fetchQuestions();
             }}
             question={editingQuestion}
+          />
+        )}
+
+        {/* View Modal for students */}
+        {!isTeacherOrAdmin && isViewModalOpen && viewingQuestion && (
+          <ViewQuestionModal
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            question={viewingQuestion}
+            hierarchy={getQuestionHierarchy(viewingQuestion)}
+            formatDate={formatDate}
           />
         )}
       </div>

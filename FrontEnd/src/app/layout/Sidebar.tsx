@@ -42,11 +42,7 @@ const Sidebar = () => {
         },
         { name: "Curricula", icon: <BookOpen size={20} />, href: "/curricula" },
         { name: "Users", icon: <Users size={20} />, href: "/userPage" },
-        {
-          name: "Analytics",
-          icon: <BarChart3 size={20} />,
-          href: "/analytics",
-        },
+  
         {
           name: "Prompts",
           icon: <FileText size={20} />,
@@ -66,11 +62,6 @@ const Sidebar = () => {
           name: "Questions",
           icon: <FileQuestion size={20} />,
           href: "/questions",
-        },
-        {
-          name: "Analytics",
-          icon: <BarChart3 size={20} />,
-          href: "/analytics",
         },
         {
           name: "Prompts",
